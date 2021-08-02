@@ -60,6 +60,8 @@ select * from finviz_stock_screener_unique;
 select * from finviz_archive;
 select * from finviz_stock_screener;
 select * from finviz_all_list order by "Count" desc;
+
+UPDATE finviz_all_list SET "Count" = finviz_all_list."Count" - 1, finviz_all_list."Last_Updated_On" = "2021-07-30" WHERE finviz_all_list."Last_Updated_On" = "2021-08-02";
 -- DELETE FROM finviz_all_list;
 -- ALTER TABLE finviz_all_list ADD CONSTRAINT uniqueticker UNIQUE ("Ticker");
 
