@@ -8,8 +8,8 @@ import sqlalchemy
 
 
 def main():
-    req1 = TickerDetection("https://finviz.com/screener.ashx?v=141&f=fa_epsqoq_pos,fa_salesqoq_pos,sh_curvol_o1000,ta_beta_o1,ta_highlow20d_b5h,ta_highlow52w_a70h,ta_sma20_sa50,ta_sma200_sb50,ta_sma50_pa&ft=4&o=-perf13w")
-    req2 = TickerDetection("https://finviz.com/screener.ashx?v=111&f=sh_avgvol_o500,sh_price_u40,sh_relvol_o0.75,ta_pattern_tlsupport2&ft=4&o=-volume")
+    req1 = "https://finviz.com/screener.ashx?v=141&f=fa_epsqoq_pos,fa_salesqoq_pos,sh_curvol_o1000,ta_beta_o1,ta_highlow20d_b5h,ta_highlow52w_a70h,ta_sma20_sa50,ta_sma200_sb50,ta_sma50_pa&ft=4&o=-perf13w"
+    req2 = "https://finviz.com/screener.ashx?v=111&f=sh_avgvol_o500,sh_price_u40,sh_relvol_o0.75,ta_pattern_tlsupport2&ft=4&o=-volume"
     TickerDetection(req1,req2)
 
 
@@ -44,6 +44,7 @@ def TickerDetection(*request_url):
     #Generate old and new data in list format
     old_result = engine.execute('select "Ticker" from finviz_archive')
     new_result = engine.execute('select "Ticker" from finviz_stock_screener_unique')
+    #all_list_result = engine.execute('select * from finviz_all_list')
     engine.dispose()
     old_tickers = [row[0] for row in old_result]
     new_tickers = [row[0] for row in new_result]
