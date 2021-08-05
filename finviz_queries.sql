@@ -41,7 +41,7 @@ AS $$
 DECLARE
     REC RECORD;
 BEGIN
-    FOR REC in (SELECT "Ticker" FROM finviz_stock_screener_unique) 
+    FOR REC in (SELECT "Ticker" FROM finviz_stock_screener) 
     LOOP
         INSERT INTO finviz_all_list ("Count", "Ticker", "Last_Updated_On")
         VALUES (1, REC."Ticker", CURRENT_DATE)
