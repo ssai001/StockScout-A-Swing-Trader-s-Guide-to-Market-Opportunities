@@ -5,13 +5,11 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Debug Current File",
+            "name": "Python: Current File",
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "console": "integratedTerminal",
-            "stopOnEntry": true,
-            "justMyCode": false
+            "console": "integratedTerminal"
         },
     ]
 }
