@@ -1,21 +1,47 @@
 ---------------------------Queries to get list of records from each table---------------------------
 select * from finviz_stock_screener;
-select * from finviz_archive;
-select * from finviz_stock_screener_unique;
 select * from finviz_all_list order by "Count" desc;
 ----------------------------------------------------------------------------------------------------
 
 
 ---------------------------Queries to get count of records from each table---------------------------
 select count(*) from finviz_stock_screener;
-select count(*) from finviz_archive;
 -----------------------------------------------------------------------------------------------------
 
 
----------------------------Queries to update records from each table (mop-up)---------------------------
+---------------------------Test Cases: Important Queries for Mop-up Process---------------------------
+
+--Initial Insert
+DELETE FROM finviz_stock_screener;
+DELETE FROM finviz_all_list;
+INSERT INTO finviz_stock_screener ("Ticker", "Perf Month", "Avg Volume", "Price", "Volume")
+VALUES ('CHS', '1.89%', '3.20M', 88.88, 1111111); --can change values every time
+CALL finviz_all_list();
+select * from finviz_all_list order by "Count" desc;
+
+
+--Insert to detect change
+DELETE FROM finviz_stock_screener;
+INSERT INTO finviz_stock_screener ("Ticker", "Perf Month", "Avg Volume", "Price", "Volume")
+VALUES ('CHS', '2.94%', '4.39M', 44.44, 2222222); --can change values every time
+CALL finviz_all_list();
+select * from finviz_all_list order by "Count" desc;
+
+
+--Additional changes (same as above but inserting new data)
+DELETE FROM finviz_stock_screener;
+INSERT INTO finviz_stock_screener ("Ticker", "Perf Month", "Avg Volume", "Price", "Volume")
+VALUES ('CHS', '4.93%', '8.49M', 22.22, 3333333); --can change values every time
+CALL finviz_all_list();
+select * from finviz_all_list order by "Count" desc;
+
+-----------------------------------------------------------------------------------------------
+
+
+---------------------------Queries to get count of records from each table---------------------------
 UPDATE finviz_all_list SET "Count" = finviz_all_list."Count" - 1, "Last_Updated_On" = '2021-07-30' 
 WHERE finviz_all_list."Last_Updated_On" = '2021-08-02';
------------------------------------------------------------------------------------------------
+---------------------------Queries to get count of records from each table---------------------------
 
 
 ---------------------------Queries to create tables----------------------------------------------
@@ -23,9 +49,24 @@ CREATE TABLE finviz_stock_screener(
     "Ticker" VARCHAR(20), 
     "Performance_Month" VARCHAR(20), 
     "Price" DECIMAL, 
-    "Change" VARCHAR(20), 
     "Average_Volume" VARCHAR(20), 
-    "Volume" INTEGER
+    "Volume" BIGINT
+);
+
+
+CREATE TABLE finviz_all_list(
+    "Count" INTEGER, 
+    "Ticker" VARCHAR(20), 
+    "Current_Price" DECIMAL, 
+    "Previous_Price" DECIMAL, 
+    "Current_Volume" BIGINT,
+    "Previous_Volume" BIGINT, 
+    "Current_Average_Volume" VARCHAR(20),
+    "Previous_Average_Volume" VARCHAR(20), 
+    "Current_Performance" VARCHAR(20), 
+    "Previous_Performance" VARCHAR(20), 
+    "Initial_Insert" DATE, 
+    "Last_Updated_On" DATE
 );
 -----------------------------------------------------------------------------------------------
 
@@ -41,13 +82,22 @@ AS $$
 DECLARE
     REC RECORD;
 BEGIN
-    FOR REC in (SELECT "Ticker" FROM finviz_stock_screener) 
+    FOR REC in (SELECT * FROM finviz_stock_screener) 
     LOOP
-        INSERT INTO finviz_all_list ("Count", "Ticker", "Last_Updated_On")
-        VALUES (1, REC."Ticker", CURRENT_DATE)
+        INSERT INTO finviz_all_list ("Count", "Ticker", "Current_Price", "Previous_Price",
+        "Current_Volume", "Previous_Volume", "Current_Average_Volume", "Previous_Average_Volume",
+        "Current_Performance", "Previous_Performance", "Initial_Insert", "Last_Updated_On")
+        VALUES (1, REC."Ticker", REC."Price", REC."Price",
+        REC."Volume", REC."Volume", REC."Avg Volume", REC."Avg Volume",
+        REC."Perf Month", REC."Perf Month", CURRENT_DATE, CURRENT_DATE)
         ON CONFLICT ("Ticker")
         DO
-            UPDATE SET "Count" = finviz_all_list."Count" + 1, "Last_Updated_On" = CURRENT_DATE;
+            UPDATE SET "Count" = finviz_all_list."Count" + 1, 
+            "Current_Price" = REC."Price", "Previous_Price" = finviz_all_list."Current_Price",
+            "Current_Volume" = REC."Volume", "Previous_Volume" = finviz_all_list."Current_Volume", 
+            "Current_Average_Volume" = REC."Avg Volume", "Previous_Average_Volume" = finviz_all_list."Current_Average_Volume",
+            "Current_Performance" = REC."Perf Month", "Previous_Performance" = finviz_all_list."Current_Performance", 
+            "Last_Updated_On" = CURRENT_DATE;
     END LOOP;
 END;
 $$
