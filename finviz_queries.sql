@@ -28,7 +28,7 @@ CALL finviz_all_list();
 select * from finviz_all_list order by "Count" desc;
 
 
---Additional changes (same as above but inserting new data)
+--Insert to detect additional changes (same as above but inserting new data)
 DELETE FROM finviz_stock_screener;
 INSERT INTO finviz_stock_screener ("Ticker", "Perf Month", "Avg Volume", "Price", "Volume")
 VALUES ('CHS', '4.93%', '8.49M', 22.22, 3333333); --can change values every time
