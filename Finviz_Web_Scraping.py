@@ -8,9 +8,11 @@ import sqlalchemy
 
 
 def main():
-    req1 = "https://finviz.com/screener.ashx?v=141&f=fa_epsqoq_pos,fa_salesqoq_pos,sh_curvol_o1000,ta_beta_o1,ta_highlow20d_b5h,ta_highlow52w_a70h,ta_sma20_sa50,ta_sma200_sb50,ta_sma50_pa&ft=4&o=-perf13w"
-    #req2 = "https://finviz.com/screener.ashx?v=111&f=sh_avgvol_o500,sh_price_u40,sh_relvol_o0.75,ta_pattern_tlsupport2&ft=4&o=-volume"
-    TickerDetection(req1)
+    swingtrade1 = "https://finviz.com/screener.ashx?v=141&f=fa_epsqoq_pos,fa_salesqoq_pos,sh_curvol_o1000,ta_beta_o1,ta_highlow20d_b5h,ta_highlow52w_a70h,ta_sma20_sa50,ta_sma200_sb50,ta_sma50_pa&ft=4&o=-perf13w"
+    swingtrade2 = "https://finviz.com/screener.ashx?v=141&f=sh_avgvol_o500,sh_price_u40,sh_relvol_o0.75,ta_pattern_tlsupport2&ft=4&o=-volume"
+    finviz_url_list = [swingtrade1,swingtrade2]
+    [TickerDetection(url) for url in finviz_url_list]
+    #StockReport()
 
 
 def TickerDetection(request_url):
@@ -34,20 +36,18 @@ def TickerDetection(request_url):
     connection = engine.raw_connection()
     cursor = connection.cursor()
     appended_data_pd_trimmed.to_sql('finviz_stock_screener', engine, if_exists='replace',
-    dtype={'Ticker': sqlalchemy.VARCHAR(20), 
-                   'Performance_Month':  sqlalchemy.types.VARCHAR(20),
-                   'Price': sqlalchemy.types.DECIMAL,
-                   'Average_Volume': sqlalchemy.types.VARCHAR(20),
-                   'Volume': sqlalchemy.types.BIGINT})
+    dtype={'Ticker': sqlalchemy.VARCHAR(20), 'Performance_Month':  sqlalchemy.types.VARCHAR(20), 'Price': sqlalchemy.types.DECIMAL, 
+           'Average_Volume': sqlalchemy.types.VARCHAR(20), 'Volume': sqlalchemy.types.BIGINT})
     cursor.execute("CALL finviz_all_list();")
     connection.commit()
     cursor.close()
     connection.close()
 
+
+def StockReport():
+    pass
     #Generate old and new data in list format
-    # old_result = engine.execute('select "Ticker" from finviz_all_list')
-    # new_result = engine.execute('select "Ticker" from finviz_all_list')
-    # #all_list_result = engine.execute('select * from finviz_all_list')
+    # finviz_report = engine.execute('select * from finviz_all_list')
     # engine.dispose()
     # old_tickers = [row[0] for row in old_result]
     # new_tickers = [row[0] for row in new_result]
