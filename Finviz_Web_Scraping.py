@@ -53,34 +53,6 @@ def GenerateReport():
     finviz_report = engine.execute('select * from finviz_all_list')
     engine.dispose()
 
-    inserted_tickers = []
-    updated_tickers = []
-
-    for row in finviz_report:
-        if row[0] == 1 and str(row[10]) == datetime.today().strftime('%Y-%m-%d'):
-            inserted_tickers.append("{} has been inserted into the tracker today!".format(row[1]))
-        if str(row[11]) == datetime.today().strftime('%Y-%m-%d'):
-            updated_tickers.append("{} has been updated in the tracker today!".format(row[1]))
-
-
-    # inserted_tickers = ["{} has been inserted into the tracker today!".format(row[1]) for row in finviz_report if row[0] == 1 and str(row[10]) == datetime.today().strftime('%Y-%m-%d')]
-    # updated_tickers = ["{} has been updated in the tracker today!".format(row[1]) for row in finviz_report if str(row[11]) == datetime.today().strftime('%Y-%m-%d')]
-    # inactive_tickers = ["{} is now inactive!".format(row[1]) for row in finviz_report if str(row[11]) != datetime.today().strftime('%Y-%m-%d')]
-    # increased_price = ["{} had a price increase from {} to {} today!".format(row[1],str(row[3]),str(row[2])) for row in finviz_report if row[2] > row[3] and str(row[11]) == datetime.today().strftime('%Y-%m-%d')]
-    # decreased_price = ["{} had a price decrease from {} to {} today!".format(row[1],str(row[3]),str(row[2])) for row in finviz_report if row[2] < row[3] and str(row[11]) == datetime.today().strftime('%Y-%m-%d')]
-    # same_price = ["{} had no price change today!".format(row[1]) for row in finviz_report if row[2] == row[3] and str(row[11]) == datetime.today().strftime('%Y-%m-%d')]
-    # increased_volume = ["{} had a volume increase from {} to {} today!".format(row[1],str(row[5]),str(row[4])) for row in finviz_report if row[4] > row[5] and str(row[11]) == datetime.today().strftime('%Y-%m-%d')]
-    # decreased_volume = ["{} had a volume decrease from {} to {} today!".format(row[1],str(row[5]),str(row[4])) for row in finviz_report if row[4] < row[5] and str(row[11]) == datetime.today().strftime('%Y-%m-%d')]
-    # same_volume = ["{} had no volume change today!".format(row[1]) for row in finviz_report if row[4] == row[5] and str(row[11]) == datetime.today().strftime('%Y-%m-%d')]
-    # increased_average_volume = ["{} had an average volume increase from {} to {} today!".format(row[1],str(row[7]),str(row[6])) for row in finviz_report if row[6] > row[7] and str(row[11]) == datetime.today().strftime('%Y-%m-%d')]
-    # decreased_average_volume = ["{} had an average volume decrease from {} to {} today!".format(row[1],str(row[7]),str(row[6])) for row in finviz_report if row[6] < row[7] and str(row[11]) == datetime.today().strftime('%Y-%m-%d')]
-    # same_average_volume = ["{} had no average volume change today!".format(row[1]) for row in finviz_report if row[6] == row[7] and str(row[11]) == datetime.today().strftime('%Y-%m-%d')]
-    # increased_performance = ["{} had a performance increase from {} to {} today!".format(row[1],str(row[9]),str(row[8])) for row in finviz_report if row[8] > row[9] and str(row[11]) == datetime.today().strftime('%Y-%m-%d')]
-    # decreased_performance = ["{} had a performance decrease from {} to {} today!".format(row[1],str(row[9]),str(row[8])) for row in finviz_report if row[8] < row[9] and str(row[11]) == datetime.today().strftime('%Y-%m-%d')]
-    # same_performance = ["{} had no performance change today!".format(row[1]) for row in finviz_report if row[8] == row[9] and str(row[11]) == datetime.today().strftime('%Y-%m-%d')]
-    # print(inserted_tickers)
-    # print(updated_tickers)
-
 
 def SendEmail(input_list,date):
     
