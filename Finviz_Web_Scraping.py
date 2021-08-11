@@ -1,6 +1,7 @@
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import datetime
+from datetime import datetime
+from datetime import date
 import requests
 import pandas as pd
 import smtplib
@@ -10,9 +11,10 @@ import sqlalchemy
 def main():
     swingtrade1 = "https://finviz.com/screener.ashx?v=141&f=fa_epsqoq_pos,fa_salesqoq_pos,sh_curvol_o1000,ta_beta_o1,ta_highlow20d_b5h,ta_highlow52w_a70h,ta_sma20_sa50,ta_sma200_sb50,ta_sma50_pa&ft=4&o=-perf13w"
     swingtrade2 = "https://finviz.com/screener.ashx?v=141&f=sh_avgvol_o500,sh_price_u40,sh_relvol_o0.75,ta_pattern_tlsupport2&ft=4&o=-volume"
-    finviz_url_list = [swingtrade1,swingtrade2]
-    [TickerDetection(url) for url in finviz_url_list]
-    #StockReport()
+    swingtrade3 = "https://finviz.com/screener.ashx?v=141&f=sh_avgvol_o500,sh_float_u50,sh_outstanding_u50,sh_relvol_o2&ft=4&o=-volume"
+    finviz_url_list = [swingtrade1,swingtrade2,swingtrade3]
+    # [TickerDetection(url) for url in finviz_url_list]
+    GenerateReport()
 
 
 def TickerDetection(request_url):
@@ -42,23 +44,45 @@ def TickerDetection(request_url):
     connection.commit()
     cursor.close()
     connection.close()
+    engine.dispose()
 
 
-def StockReport():
-    pass
-    #Generate old and new data in list format
-    # finviz_report = engine.execute('select * from finviz_all_list')
-    # engine.dispose()
-    # old_tickers = [row[0] for row in old_result]
-    # new_tickers = [row[0] for row in new_result]
-    # old_tickers_distinct = list(set(old_tickers))
-    # new_tickers_distinct = list(set(new_tickers))
-    # deleted_tickers = [x for x in old_tickers_distinct if x not in new_tickers_distinct]
-    # inserted_tickers = [x for x in new_tickers_distinct if x not in old_tickers_distinct]
-    # SendEmail(deleted_tickers,inserted_tickers,datetime.date.today())
+def GenerateReport():  
+
+    engine = sqlalchemy.create_engine("postgresql+psycopg2://postgres:sidd1968!@@127.0.0.1:5432/postgres")
+    finviz_report = engine.execute('select * from finviz_all_list')
+    engine.dispose()
+
+    inserted_tickers = []
+    updated_tickers = []
+
+    for row in finviz_report:
+        if row[0] == 1 and str(row[10]) == datetime.today().strftime('%Y-%m-%d'):
+            inserted_tickers.append("{} has been inserted into the tracker today!".format(row[1]))
+        if str(row[11]) == datetime.today().strftime('%Y-%m-%d'):
+            updated_tickers.append("{} has been updated in the tracker today!".format(row[1]))
 
 
-def SendEmail(old,new,date):
+    # inserted_tickers = ["{} has been inserted into the tracker today!".format(row[1]) for row in finviz_report if row[0] == 1 and str(row[10]) == datetime.today().strftime('%Y-%m-%d')]
+    # updated_tickers = ["{} has been updated in the tracker today!".format(row[1]) for row in finviz_report if str(row[11]) == datetime.today().strftime('%Y-%m-%d')]
+    # inactive_tickers = ["{} is now inactive!".format(row[1]) for row in finviz_report if str(row[11]) != datetime.today().strftime('%Y-%m-%d')]
+    # increased_price = ["{} had a price increase from {} to {} today!".format(row[1],str(row[3]),str(row[2])) for row in finviz_report if row[2] > row[3] and str(row[11]) == datetime.today().strftime('%Y-%m-%d')]
+    # decreased_price = ["{} had a price decrease from {} to {} today!".format(row[1],str(row[3]),str(row[2])) for row in finviz_report if row[2] < row[3] and str(row[11]) == datetime.today().strftime('%Y-%m-%d')]
+    # same_price = ["{} had no price change today!".format(row[1]) for row in finviz_report if row[2] == row[3] and str(row[11]) == datetime.today().strftime('%Y-%m-%d')]
+    # increased_volume = ["{} had a volume increase from {} to {} today!".format(row[1],str(row[5]),str(row[4])) for row in finviz_report if row[4] > row[5] and str(row[11]) == datetime.today().strftime('%Y-%m-%d')]
+    # decreased_volume = ["{} had a volume decrease from {} to {} today!".format(row[1],str(row[5]),str(row[4])) for row in finviz_report if row[4] < row[5] and str(row[11]) == datetime.today().strftime('%Y-%m-%d')]
+    # same_volume = ["{} had no volume change today!".format(row[1]) for row in finviz_report if row[4] == row[5] and str(row[11]) == datetime.today().strftime('%Y-%m-%d')]
+    # increased_average_volume = ["{} had an average volume increase from {} to {} today!".format(row[1],str(row[7]),str(row[6])) for row in finviz_report if row[6] > row[7] and str(row[11]) == datetime.today().strftime('%Y-%m-%d')]
+    # decreased_average_volume = ["{} had an average volume decrease from {} to {} today!".format(row[1],str(row[7]),str(row[6])) for row in finviz_report if row[6] < row[7] and str(row[11]) == datetime.today().strftime('%Y-%m-%d')]
+    # same_average_volume = ["{} had no average volume change today!".format(row[1]) for row in finviz_report if row[6] == row[7] and str(row[11]) == datetime.today().strftime('%Y-%m-%d')]
+    # increased_performance = ["{} had a performance increase from {} to {} today!".format(row[1],str(row[9]),str(row[8])) for row in finviz_report if row[8] > row[9] and str(row[11]) == datetime.today().strftime('%Y-%m-%d')]
+    # decreased_performance = ["{} had a performance decrease from {} to {} today!".format(row[1],str(row[9]),str(row[8])) for row in finviz_report if row[8] < row[9] and str(row[11]) == datetime.today().strftime('%Y-%m-%d')]
+    # same_performance = ["{} had no performance change today!".format(row[1]) for row in finviz_report if row[8] == row[9] and str(row[11]) == datetime.today().strftime('%Y-%m-%d')]
+    # print(inserted_tickers)
+    # print(updated_tickers)
+
+
+def SendEmail(input_list,date):
     
     #Initialize Key Details
     email_sender_account = "chidachais@gmail.com"
@@ -77,12 +101,7 @@ def SendEmail(old,new,date):
     #Tickers Deleted List
     email_body += f'<h1 style="color: rgb(86, 0, 251);">' 
     email_body += f'<b>Deleted Tickers</b>: ' 
-    email_body += f'{old}</h1>' 
-
-    #Tickers Added List
-    email_body += f'<h1 style="color: rgb(9, 179, 23);">' 
-    email_body += f'<b>Newly Added Tickers</b>: ' 
-    email_body += f'{new}</h1>' 
+    email_body += f'{input_list}</h1>' 
 
     #Email Generation
     server = smtplib.SMTP(email_smtp_server,email_smtp_port) 
