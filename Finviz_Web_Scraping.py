@@ -13,8 +13,8 @@ def main():
     swingtrade2 = "https://finviz.com/screener.ashx?v=141&f=sh_avgvol_o500,sh_price_u40,sh_relvol_o0.75,ta_pattern_tlsupport2&ft=4&o=-volume"
     swingtrade3 = "https://finviz.com/screener.ashx?v=141&f=sh_avgvol_o500,sh_float_u50,sh_outstanding_u50,sh_relvol_o2&ft=4&o=-volume"
     finviz_url_list = [swingtrade1,swingtrade2,swingtrade3]
-    # [TickerDetection(url) for url in finviz_url_list]
-    GenerateReport()
+    [TickerDetection(url) for url in finviz_url_list]
+    # GenerateReport()
 
 
 def TickerDetection(request_url):
@@ -40,7 +40,7 @@ def TickerDetection(request_url):
     appended_data_pd_trimmed.to_sql('finviz_stock_screener', engine, if_exists='replace',
     dtype={'Ticker': sqlalchemy.VARCHAR(20), 'Performance_Month':  sqlalchemy.types.VARCHAR(20), 'Price': sqlalchemy.types.DECIMAL, 
            'Average_Volume': sqlalchemy.types.VARCHAR(20), 'Volume': sqlalchemy.types.BIGINT})
-    cursor.execute("CALL finviz_all_list();")
+    cursor.execute("CALL finviz_all_list();") #add more columns to take difference between price/volume/etc...
     connection.commit()
     cursor.close()
     connection.close()
@@ -50,8 +50,9 @@ def TickerDetection(request_url):
 def GenerateReport():  
 
     engine = sqlalchemy.create_engine("postgresql+psycopg2://postgres:sidd1968!@@127.0.0.1:5432/postgres")
-    finviz_report = engine.execute('select * from finviz_all_list')
+    finviz_report = engine.execute('select * from finviz_all_list') #only select columns that show difference in values
     engine.dispose()
+    #save above result into dataframe and beautify it
 
 
 def SendEmail(input_list,date):
