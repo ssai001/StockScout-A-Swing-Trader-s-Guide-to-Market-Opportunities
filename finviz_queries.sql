@@ -41,7 +41,6 @@ select * from finviz_all_list order by "Count" desc;
 ---------------------------Queries to get count of records from each table---------------------------
 UPDATE finviz_all_list SET "Count" = finviz_all_list."Count" - 1, "Last_Updated_On" = '2021-07-30' 
 WHERE finviz_all_list."Last_Updated_On" = '2021-08-02';
----------------------------Queries to get count of records from each table---------------------------
 
 
 ---------------------------Queries to create tables----------------------------------------------
@@ -73,6 +72,18 @@ CREATE TABLE finviz_all_list(
 
 ---------------------------Queries to alter tables----------------------------------------------
 ALTER TABLE finviz_all_list ADD CONSTRAINT uniqueticker UNIQUE ("Ticker");
+
+ALTER TABLE finviz_all_list ADD COLUMN "Status" TEXT;
+ALTER TABLE finviz_all_list ADD COLUMN "Price_Behavior" TEXT;
+ALTER TABLE finviz_all_list ADD COLUMN "Volume_Behavior" TEXT;
+ALTER TABLE finviz_all_list ADD COLUMN "Average_Volume_Behavior" TEXT;
+ALTER TABLE finviz_all_list ADD COLUMN "Performance_Behavior" TEXT;
+
+ALTER TABLE finviz_all_list ALTER COLUMN "Status" SET NOT NULL;
+ALTER TABLE finviz_all_list ALTER COLUMN "Price_Behavior" SET NOT NULL;
+ALTER TABLE finviz_all_list ALTER COLUMN "Volume_Behavior" SET NOT NULL;
+ALTER TABLE finviz_all_list ALTER COLUMN "Average_Volume_Behavior" SET NOT NULL;
+ALTER TABLE finviz_all_list ALTER COLUMN "Performance_Behavior" SET NOT NULL;
 -----------------------------------------------------------------------------------------------
 
 
@@ -82,14 +93,17 @@ AS $$
 DECLARE
     REC RECORD;
 BEGIN
+
     FOR REC in (SELECT * FROM finviz_stock_screener) 
     LOOP
         INSERT INTO finviz_all_list ("Count", "Ticker", "Current_Price", "Previous_Price",
         "Current_Volume", "Previous_Volume", "Current_Average_Volume", "Previous_Average_Volume",
-        "Current_Performance", "Previous_Performance", "Initial_Insert", "Last_Updated_On")
+        "Current_Performance", "Previous_Performance", "Initial_Insert", "Last_Updated_On",
+        "Status", "Price_Behavior", "Volume_Behavior", "Average_Volume_Behavior", "Performance_Behavior")
         VALUES (1, REC."Ticker", REC."Price", REC."Price",
         REC."Volume", REC."Volume", REC."Avg Volume", REC."Avg Volume",
-        REC."Perf Month", REC."Perf Month", CURRENT_DATE, CURRENT_DATE)
+        REC."Perf Month", REC."Perf Month", CURRENT_DATE, CURRENT_DATE,
+        'NEW INSERT','No Price Change','No Volume Change','No Average Volume Change','No Performance Change')
         ON CONFLICT ("Ticker")
         DO
             UPDATE SET "Count" = finviz_all_list."Count" + 1, 
@@ -99,6 +113,38 @@ BEGIN
             "Current_Performance" = REC."Perf Month", "Previous_Performance" = finviz_all_list."Current_Performance", 
             "Last_Updated_On" = CURRENT_DATE;
     END LOOP;
+
+    UPDATE finviz_all_list AS fal
+    SET 
+    "Status" = CASE
+        WHEN fal."Count" = 1 AND fal."Last_Updated_On" = CURRENT_DATE THEN 'NEW INSERT'
+        WHEN fal."Count" > 1 AND fal."Last_Updated_On" = CURRENT_DATE THEN 'UPDATED'
+        ELSE 'ARCHIVED'
+        END,
+    "Price_Behavior" = CASE
+        WHEN fal."Current_Price" > fal."Previous_Price" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Increase From ' || fal."Previous_Price" || ' to ' || fal."Current_Price"
+        WHEN fal."Current_Price" = fal."Previous_Price" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'No Change'
+        WHEN fal."Current_Price" < fal."Previous_Price" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Decrease From ' || fal."Previous_Price" || ' to ' || fal."Current_Price"
+        ELSE 'Not Applicable'
+        END,
+    "Volume_Behavior" = CASE
+        WHEN fal."Current_Volume" > fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Increase From ' || fal."Previous_Volume" || ' to ' || fal."Current_Volume"
+        WHEN fal."Current_Volume" = fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'No Change'
+        WHEN fal."Current_Volume" < fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Decrease From ' || fal."Previous_Volume" || ' to ' || fal."Current_Volume"
+        ELSE 'Not Applicable'
+        END,
+    "Average_Volume_Behavior" = CASE
+        WHEN LEFT(fal."Current_Average_Volume",-1)::DECIMAL > LEFT(fal."Previous_Average_Volume",-1)::DECIMAL AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Increase From ' || fal."Previous_Average_Volume" || ' to ' || fal."Current_Average_Volume"
+        WHEN LEFT(fal."Current_Average_Volume",-1)::DECIMAL = LEFT(fal."Previous_Average_Volume",-1)::DECIMAL AND fal."Last_Updated_On" = CURRENT_DATE THEN 'No Change'
+        WHEN LEFT(fal."Current_Average_Volume",-1)::DECIMAL < LEFT(fal."Previous_Average_Volume",-1)::DECIMAL AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Decrease From ' || fal."Previous_Average_Volume" || ' to ' || fal."Current_Average_Volume"
+        ELSE 'Not Applicable'
+        END,
+    "Performance_Behavior" = CASE
+        WHEN LEFT(fal."Current_Performance",-1)::DECIMAL > LEFT(fal."Previous_Performance",-1)::DECIMAL AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Increase From ' || fal."Previous_Performance" || ' to ' || fal."Current_Performance"
+        WHEN LEFT(fal."Current_Performance",-1)::DECIMAL = LEFT(fal."Previous_Performance",-1)::DECIMAL AND fal."Last_Updated_On" = CURRENT_DATE THEN 'No Change'
+        WHEN LEFT(fal."Current_Performance",-1)::DECIMAL < LEFT(fal."Previous_Performance",-1)::DECIMAL AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Decrease From ' || fal."Previous_Performance" || ' to ' || fal."Current_Performance"
+        ELSE 'Not Applicable'
+    END;
 END;
 $$
 LANGUAGE PLPGSQL;
