@@ -39,9 +39,7 @@ select * from finviz_all_list order by "Count" desc;
 
 
 ---------------------------Queries to get count of records from each table---------------------------
-UPDATE finviz_all_list SET "Count" = finviz_all_list."Count" - 1, "Last_Updated_On" = '2021-07-30' 
-WHERE finviz_all_list."Last_Updated_On" = '2021-08-02';
-
+UPDATE finviz_all_list SET "Initial_Insert" = CURRENT_DATE - INTEGER '2', "Last_Updated_On" = CURRENT_DATE - INTEGER '2';
 
 ---------------------------Queries to create tables----------------------------------------------
 CREATE TABLE finviz_stock_screener(
