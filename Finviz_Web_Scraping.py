@@ -50,6 +50,7 @@ def TickerDetection(request_url):
 
 def GenerateReport():  
 
+    #Take final output from finviz_all_list table, enhance table look, and send as email
     engine = sqlalchemy.create_engine("postgresql+psycopg2://postgres:sidd1968!@@127.0.0.1:5432/postgres")
     finviz_report = pd.read_sql_query('select * from finviz_all_list', engine) #only select columns that show difference in values
     output = build_table(finviz_report, 'blue_light')
