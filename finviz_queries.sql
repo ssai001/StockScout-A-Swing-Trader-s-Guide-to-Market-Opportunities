@@ -114,12 +114,18 @@ BEGIN
     SET 
     "Status" = CASE
         WHEN fal."Count" = 1 AND fal."Last_Updated_On" = CURRENT_DATE THEN 'NEW INSERT'
+        WHEN fal."Count" > 1 AND fal."Current_Price" = fal."Previous_Price" AND fal."Current_Volume" = fal."Previous_Volume" 
+        AND LEFT(fal."Current_Average_Volume",-1)::DECIMAL = LEFT(fal."Previous_Average_Volume",-1)::DECIMAL 
+        AND LEFT(fal."Current_Performance",-1)::DECIMAL = LEFT(fal."Previous_Performance",-1)::DECIMAL AND fal."Last_Updated_On" = CURRENT_DATE THEN 'NEW INSERT'
         WHEN fal."Count" > 1 AND fal."Last_Updated_On" = CURRENT_DATE THEN 'UPDATED'
         ELSE 'ARCHIVED'
         END,
     "Price_Behavior" = CASE
         WHEN fal."Current_Price" > fal."Previous_Price" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Increase From ' || fal."Previous_Price" || ' to ' || fal."Current_Price"
         WHEN fal."Current_Price" = fal."Previous_Price" AND fal."Count" = 1 AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Initial Price'
+        WHEN fal."Count" > 1 AND fal."Current_Price" = fal."Previous_Price" AND fal."Current_Volume" = fal."Previous_Volume" 
+        AND LEFT(fal."Current_Average_Volume",-1)::DECIMAL = LEFT(fal."Previous_Average_Volume",-1)::DECIMAL 
+        AND LEFT(fal."Current_Performance",-1)::DECIMAL = LEFT(fal."Previous_Performance",-1)::DECIMAL AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Initial Price'
         WHEN fal."Current_Price" = fal."Previous_Price" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'No Change'
         WHEN fal."Current_Price" < fal."Previous_Price" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Decrease From ' || fal."Previous_Price" || ' to ' || fal."Current_Price"
         ELSE 'Not Applicable'
@@ -127,6 +133,9 @@ BEGIN
     "Volume_Behavior" = CASE
         WHEN fal."Current_Volume" > fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Increase From ' || fal."Previous_Volume" || ' to ' || fal."Current_Volume"
         WHEN fal."Current_Volume" = fal."Previous_Volume" AND fal."Count" = 1 AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Initial Volume'
+        WHEN fal."Count" > 1 AND fal."Current_Price" = fal."Previous_Price" AND fal."Current_Volume" = fal."Previous_Volume" 
+        AND LEFT(fal."Current_Average_Volume",-1)::DECIMAL = LEFT(fal."Previous_Average_Volume",-1)::DECIMAL 
+        AND LEFT(fal."Current_Performance",-1)::DECIMAL = LEFT(fal."Previous_Performance",-1)::DECIMAL AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Initial Volume'
         WHEN fal."Current_Volume" = fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'No Change'
         WHEN fal."Current_Volume" < fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Decrease From ' || fal."Previous_Volume" || ' to ' || fal."Current_Volume"
         ELSE 'Not Applicable'
@@ -134,6 +143,9 @@ BEGIN
     "Average_Volume_Behavior" = CASE
         WHEN LEFT(fal."Current_Average_Volume",-1)::DECIMAL > LEFT(fal."Previous_Average_Volume",-1)::DECIMAL AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Increase From ' || fal."Previous_Average_Volume" || ' to ' || fal."Current_Average_Volume"
         WHEN LEFT(fal."Current_Average_Volume",-1)::DECIMAL = LEFT(fal."Previous_Average_Volume",-1)::DECIMAL AND fal."Count" = 1 AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Initial Average Volume'
+        WHEN fal."Count" > 1 AND fal."Current_Price" = fal."Previous_Price" AND fal."Current_Volume" = fal."Previous_Volume" 
+        AND LEFT(fal."Current_Average_Volume",-1)::DECIMAL = LEFT(fal."Previous_Average_Volume",-1)::DECIMAL 
+        AND LEFT(fal."Current_Performance",-1)::DECIMAL = LEFT(fal."Previous_Performance",-1)::DECIMAL AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Initial Average Volume'
         WHEN LEFT(fal."Current_Average_Volume",-1)::DECIMAL = LEFT(fal."Previous_Average_Volume",-1)::DECIMAL AND fal."Last_Updated_On" = CURRENT_DATE THEN 'No Change'
         WHEN LEFT(fal."Current_Average_Volume",-1)::DECIMAL < LEFT(fal."Previous_Average_Volume",-1)::DECIMAL AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Decrease From ' || fal."Previous_Average_Volume" || ' to ' || fal."Current_Average_Volume"
         ELSE 'Not Applicable'
@@ -141,6 +153,9 @@ BEGIN
     "Performance_Behavior" = CASE
         WHEN LEFT(fal."Current_Performance",-1)::DECIMAL > LEFT(fal."Previous_Performance",-1)::DECIMAL AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Increase From ' || fal."Previous_Performance" || ' to ' || fal."Current_Performance"
         WHEN LEFT(fal."Current_Performance",-1)::DECIMAL = LEFT(fal."Previous_Performance",-1)::DECIMAL AND fal."Count" = 1 AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Initial Performance'
+        WHEN fal."Count" > 1 AND fal."Current_Price" = fal."Previous_Price" AND fal."Current_Volume" = fal."Previous_Volume" 
+        AND LEFT(fal."Current_Average_Volume",-1)::DECIMAL = LEFT(fal."Previous_Average_Volume",-1)::DECIMAL 
+        AND LEFT(fal."Current_Performance",-1)::DECIMAL = LEFT(fal."Previous_Performance",-1)::DECIMAL AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Initial Performance'
         WHEN LEFT(fal."Current_Performance",-1)::DECIMAL = LEFT(fal."Previous_Performance",-1)::DECIMAL AND fal."Last_Updated_On" = CURRENT_DATE THEN 'No Change'
         WHEN LEFT(fal."Current_Performance",-1)::DECIMAL < LEFT(fal."Previous_Performance",-1)::DECIMAL AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Decrease From ' || fal."Previous_Performance" || ' to ' || fal."Current_Performance"
         ELSE 'Not Applicable'
