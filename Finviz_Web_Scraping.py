@@ -1,9 +1,7 @@
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from datetime import datetime
 from datetime import date
 from pretty_html_table import build_table
-import bs4
 import requests
 import pandas as pd
 import smtplib
@@ -57,7 +55,7 @@ def GenerateReport():
     output = build_table(finviz_report, 'blue_light')
     engine.dispose()
     SendEmail(output,date.today())
-    #save above result into dataframe and beautify it
+
 
 # def StockTwits():
 #     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:77.0) Gecko/20100101 Firefox/77.0'}
