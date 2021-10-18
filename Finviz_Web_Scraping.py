@@ -2,6 +2,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import datetime
 from datetime import date
+import bs4
 import requests
 import pandas as pd
 import smtplib
@@ -15,6 +16,7 @@ def main():
     finviz_url_list = [swingtrade1,swingtrade2,swingtrade3]
     [TickerDetection(url) for url in finviz_url_list]
     # GenerateReport()
+    # StockTwits()
 
 
 def TickerDetection(request_url):
@@ -54,6 +56,18 @@ def GenerateReport():
     engine.dispose()
     #save above result into dataframe and beautify it
 
+# def StockTwits():
+#     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:77.0) Gecko/20100101 Firefox/77.0'}
+#     page = requests.get("https://stocktwits.com/symbol/BNGO",headers= headers)
+#     soupysoupy = bs4.BeautifulSoup(page.text,'html.parser')
+#     bullish_bearish_count = []
+#     count = soupysoupy.find("div",{'class':'lib_XwnOHoV lib_3UzYkI9 lib_lPsmyQd lib_2TK8fEo'})
+#     for a in count:
+#         data = a.strip()
+#         bullish_bearish_count.append(data)
+#         print (data)
+
+#     print (bullish_bearish_count)
 
 def SendEmail(input_list,date):
     
