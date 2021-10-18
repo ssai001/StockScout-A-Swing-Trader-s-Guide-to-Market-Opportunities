@@ -2,6 +2,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import datetime
 from datetime import date
+from pretty_html_table import build_table
 import bs4
 import requests
 import pandas as pd
@@ -15,7 +16,7 @@ def main():
     swingtrade3 = "https://finviz.com/screener.ashx?v=141&f=sh_avgvol_o500,sh_float_u50,sh_outstanding_u50,sh_relvol_o2&ft=4&o=-volume"
     finviz_url_list = [swingtrade1,swingtrade2,swingtrade3]
     [TickerDetection(url) for url in finviz_url_list]
-    # GenerateReport()
+    GenerateReport()
     # StockTwits()
 
 
@@ -52,8 +53,10 @@ def TickerDetection(request_url):
 def GenerateReport():  
 
     engine = sqlalchemy.create_engine("postgresql+psycopg2://postgres:sidd1968!@@127.0.0.1:5432/postgres")
-    finviz_report = engine.execute('select * from finviz_all_list') #only select columns that show difference in values
+    finviz_report = pd.read_sql_query('select * from finviz_all_list', engine) #only select columns that show difference in values
+    output = build_table(finviz_report, 'blue_light')
     engine.dispose()
+    SendEmail(output,date.today())
     #save above result into dataframe and beautify it
 
 # def StockTwits():
@@ -85,9 +88,9 @@ def SendEmail(input_list,date):
     email_body += '<style type="text/css"></style>' 
     email_body += f'<h2>Finviz Stock Tracker for {date}</h2>' 
     
-    #Tickers Deleted List
+    #Important Tickers List
     email_body += f'<h1 style="color: rgb(86, 0, 251);">' 
-    email_body += f'<b>Deleted Tickers</b>: ' 
+    email_body += f'<b>Important Tickers</b>: ' 
     email_body += f'{input_list}</h1>' 
 
     #Email Generation
