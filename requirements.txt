@@ -43,7 +43,7 @@ conda-build
 conda-content-trust
 #conda-package-handling
 #conda-repo-cli 
-conda-token
+#conda-token
 conda-verify
 contextlib2
 cryptography
