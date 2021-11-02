@@ -1,7 +1,7 @@
 alabaster
 anaconda-client
 #anaconda-navigator
-anaconda-project
+#anaconda-project
 anyio
 appdirs
 argh
