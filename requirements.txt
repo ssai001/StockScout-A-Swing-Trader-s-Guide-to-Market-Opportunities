@@ -41,7 +41,7 @@ comtypes
 conda
 conda-build
 conda-content-trust
-conda-package-handling
+#conda-package-handling
 conda-repo-cli 
 conda-token
 conda-verify
