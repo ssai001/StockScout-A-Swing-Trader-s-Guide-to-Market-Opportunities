@@ -110,7 +110,7 @@ lxml
 MarkupSafe
 matplotlib 
 mccabe
-menuinst
+#menuinst
 mistune
 mkl-fft
 mkl-random 
