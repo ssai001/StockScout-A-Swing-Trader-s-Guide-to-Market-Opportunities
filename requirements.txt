@@ -113,8 +113,8 @@ mccabe
 #menuinst
 mistune
 #mkl-fft
-mkl-random 
-mkl-service
+#mkl-random 
+#mkl-service
 mock 
 more-itertools 
 mpmath
