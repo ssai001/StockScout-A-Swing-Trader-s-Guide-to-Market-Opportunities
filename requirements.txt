@@ -112,7 +112,7 @@ matplotlib
 mccabe
 #menuinst
 mistune
-mkl-fft
+#mkl-fft
 mkl-random 
 mkl-service
 mock 
