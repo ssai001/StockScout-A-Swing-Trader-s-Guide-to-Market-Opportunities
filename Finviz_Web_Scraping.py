@@ -2,7 +2,6 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import date
 from dotenv import load_dotenv
-from jproperties import Properties
 from pretty_html_table import build_table
 import os
 import requests
