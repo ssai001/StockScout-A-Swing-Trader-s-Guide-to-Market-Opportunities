@@ -1,6 +1,7 @@
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import date
+from jproperties import Properties
 from pretty_html_table import build_table
 import requests
 import pandas as pd
@@ -15,7 +16,6 @@ def main():
     finviz_url_list = [swingtrade1,swingtrade2,swingtrade3]
     [TickerDetection(url) for url in finviz_url_list]
     GenerateReport()
-    # StockTwits()
 
 
 def TickerDetection(request_url):
@@ -35,7 +35,8 @@ def TickerDetection(request_url):
             appended_data_pd = appended_data_pd.reset_index(drop=True)
             appended_data_pd = appended_data_pd.drop_duplicates()
             appended_data_pd_trimmed = appended_data_pd[['Ticker', 'Perf Month', 'Avg Volume', 'Price', 'Volume']]
-    engine = sqlalchemy.create_engine("postgresql+psycopg2://postgres:sidd1968!@@127.0.0.1:5432/postgres")
+    opf = OpenPropertiesFile()
+    engine = sqlalchemy.create_engine("postgresql+psycopg2://{}:{}@{}:{}/{}".format(opf.get("DB_USER").data,opf.get("DB_PWD").data,opf.get("DB_HOST").data,opf.get("DB_PORT").data,opf.get("DB_NAME").data))
     connection = engine.raw_connection()
     cursor = connection.cursor()
     appended_data_pd_trimmed.to_sql('finviz_stock_screener', engine, if_exists='replace',
@@ -51,37 +52,35 @@ def TickerDetection(request_url):
 def GenerateReport():  
 
     #Take final output from finviz_all_list table, enhance table look, and send as email
-    engine = sqlalchemy.create_engine("postgresql+psycopg2://postgres:sidd1968!@@127.0.0.1:5432/postgres")
+    opf = OpenPropertiesFile()
+    engine = sqlalchemy.create_engine("postgresql+psycopg2://{}:{}@{}:{}/{}".format(opf.get("DB_USER").data,opf.get("DB_PWD").data,opf.get("DB_HOST").data,opf.get("DB_PORT").data,opf.get("DB_NAME").data))
     finviz_report = pd.read_sql_query('select * from finviz_all_list', engine) #only select columns that show difference in values
     output = build_table(finviz_report, 'blue_light')
     engine.dispose()
     SendEmail(output,date.today())
 
 
-# def StockTwits():
-#     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:77.0) Gecko/20100101 Firefox/77.0'}
-#     page = requests.get("https://stocktwits.com/symbol/BNGO",headers= headers)
-#     soupysoupy = bs4.BeautifulSoup(page.text,'html.parser')
-#     bullish_bearish_count = []
-#     count = soupysoupy.find("div",{'class':'lib_XwnOHoV lib_3UzYkI9 lib_lPsmyQd lib_2TK8fEo'})
-#     for a in count:
-#         data = a.strip()
-#         bullish_bearish_count.append(data)
-#         print (data)
-
-#     print (bullish_bearish_count)
+def OpenPropertiesFile():
+    configs = Properties()
+    with open('app-config.properties', 'rb') as config_file:
+        configs.load(config_file)
+    return configs
+    
 
 def SendEmail(input_list,date):
     
+    #Initialize Properties File object
+    opf = OpenPropertiesFile()
+
     #Initialize Key Details
-    email_sender_account = "chidachais@gmail.com"
-    email_sender_username = "chidachais@gmail.com"
-    email_sender_password = "Apple07101968!"
-    email_smtp_server = "smtp.gmail.com"
-    email_smtp_port = 587
+    email_sender_account = opf.get("email_sender_account").data
+    email_sender_username = opf.get("email_sender_username").data
+    email_sender_password = opf.get("email_sender_password").data
+    email_smtp_server = opf.get("email_smtp_server").data
+    email_smtp_port = opf.get("email_smtp_port").data
 
     #Email Header
-    email_recepients = ["siddharthsai@supplychaininc.com"]
+    email_recepients = [opf.get("email_recepients").data]
     email_subject = f"Finviz Stock Tracker for {date}"
     email_body = '<html><head></head><body>'
     email_body += '<style type="text/css"></style>' 
