@@ -1,8 +1,10 @@
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import date
+from dotenv import load_dotenv
 from jproperties import Properties
 from pretty_html_table import build_table
+import os
 import requests
 import pandas as pd
 import smtplib
@@ -16,6 +18,7 @@ def main():
     finviz_url_list = [swingtrade1,swingtrade2,swingtrade3]
     [TickerDetection(url) for url in finviz_url_list]
     GenerateReport()
+    # OpenPropertiesFile()
 
 
 def TickerDetection(request_url):
@@ -35,8 +38,8 @@ def TickerDetection(request_url):
             appended_data_pd = appended_data_pd.reset_index(drop=True)
             appended_data_pd = appended_data_pd.drop_duplicates()
             appended_data_pd_trimmed = appended_data_pd[['Ticker', 'Perf Month', 'Avg Volume', 'Price', 'Volume']]
-    opf = OpenPropertiesFile()
-    engine = sqlalchemy.create_engine("postgresql+psycopg2://{}:{}@{}:{}/{}".format(opf.get("DB_USER").data,opf.get("DB_PWD").data,opf.get("DB_HOST").data,opf.get("DB_PORT").data,opf.get("DB_NAME").data))
+    OpenPropertiesFile()
+    engine = sqlalchemy.create_engine("postgresql+psycopg2://{}:{}@{}:{}/{}".format(os.environ.get("DB_USER"),os.environ.get("DB_PWD"),os.environ.get("DB_HOST"),os.environ.get("DB_PORT"),os.environ.get("DB_NAME")))
     connection = engine.raw_connection()
     cursor = connection.cursor()
     appended_data_pd_trimmed.to_sql('finviz_stock_screener', engine, if_exists='replace',
@@ -52,8 +55,8 @@ def TickerDetection(request_url):
 def GenerateReport():  
 
     #Take final output from finviz_all_list table, enhance table look, and send as email
-    opf = OpenPropertiesFile()
-    engine = sqlalchemy.create_engine("postgresql+psycopg2://{}:{}@{}:{}/{}".format(opf.get("DB_USER").data,opf.get("DB_PWD").data,opf.get("DB_HOST").data,opf.get("DB_PORT").data,opf.get("DB_NAME").data))
+    OpenPropertiesFile()
+    engine = sqlalchemy.create_engine("postgresql+psycopg2://{}:{}@{}:{}/{}".format(os.environ.get("DB_USER"),os.environ.get("DB_PWD"),os.environ.get("DB_HOST"),os.environ.get("DB_PORT"),os.environ.get("DB_NAME")))
     finviz_report = pd.read_sql_query('select * from finviz_all_list', engine) #only select columns that show difference in values
     output = build_table(finviz_report, 'blue_light')
     engine.dispose()
@@ -61,26 +64,23 @@ def GenerateReport():
 
 
 def OpenPropertiesFile():
-    configs = Properties()
-    with open('app-config.properties', 'rb') as config_file:
-        configs.load(config_file)
-    return configs
+    load_dotenv(dotenv_path='app-config.env')
     
 
 def SendEmail(input_list,date):
     
     #Initialize Properties File object
-    opf = OpenPropertiesFile()
+    OpenPropertiesFile()
 
     #Initialize Key Details
-    email_sender_account = opf.get("email_sender_account").data
-    email_sender_username = opf.get("email_sender_username").data
-    email_sender_password = opf.get("email_sender_password").data
-    email_smtp_server = opf.get("email_smtp_server").data
-    email_smtp_port = opf.get("email_smtp_port").data
+    email_sender_account = os.environ.get("email_sender_account")
+    email_sender_username = os.environ.get("email_sender_username")
+    email_sender_password = os.environ.get("email_sender_password")
+    email_smtp_server = os.environ.get("email_smtp_server")
+    email_smtp_port = os.environ.get("email_smtp_port")
 
     #Email Header
-    email_recepients = [opf.get("email_recepients").data]
+    email_recepients = [os.environ.get("email_recepients")]
     email_subject = f"Finviz Stock Tracker for {date}"
     email_body = '<html><head></head><body>'
     email_body += '<style type="text/css"></style>' 
