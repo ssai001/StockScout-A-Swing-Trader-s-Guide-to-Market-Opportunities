@@ -17,7 +17,6 @@ def main():
     finviz_url_list = [swingtrade1,swingtrade2,swingtrade3]
     [TickerDetection(url) for url in finviz_url_list]
     GenerateReport()
-    # OpenPropertiesFile()
 
 
 def TickerDetection(request_url):
