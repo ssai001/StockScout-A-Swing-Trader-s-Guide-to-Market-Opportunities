@@ -1,7 +1,9 @@
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import date
+from dotenv import load_dotenv
 from pretty_html_table import build_table
+import os
 import requests
 import pandas as pd
 import smtplib
@@ -15,7 +17,6 @@ def main():
     finviz_url_list = [swingtrade1,swingtrade2,swingtrade3]
     [TickerDetection(url) for url in finviz_url_list]
     GenerateReport()
-    # StockTwits()
 
 
 def TickerDetection(request_url):
@@ -35,7 +36,8 @@ def TickerDetection(request_url):
             appended_data_pd = appended_data_pd.reset_index(drop=True)
             appended_data_pd = appended_data_pd.drop_duplicates()
             appended_data_pd_trimmed = appended_data_pd[['Ticker', 'Perf Month', 'Avg Volume', 'Price', 'Volume']]
-    engine = sqlalchemy.create_engine("postgresql+psycopg2://postgres:sidd1968!@@127.0.0.1:5432/postgres")
+    OpenPropertiesFile()
+    engine = sqlalchemy.create_engine("postgresql+psycopg2://{}:{}@{}:{}/{}".format(os.environ.get("DB_USER"),os.environ.get("DB_PWD"),os.environ.get("DB_HOST"),os.environ.get("DB_PORT"),os.environ.get("DB_NAME")))
     connection = engine.raw_connection()
     cursor = connection.cursor()
     appended_data_pd_trimmed.to_sql('finviz_stock_screener', engine, if_exists='replace',
@@ -51,37 +53,32 @@ def TickerDetection(request_url):
 def GenerateReport():  
 
     #Take final output from finviz_all_list table, enhance table look, and send as email
-    engine = sqlalchemy.create_engine("postgresql+psycopg2://postgres:sidd1968!@@127.0.0.1:5432/postgres")
+    OpenPropertiesFile()
+    engine = sqlalchemy.create_engine("postgresql+psycopg2://{}:{}@{}:{}/{}".format(os.environ.get("DB_USER"),os.environ.get("DB_PWD"),os.environ.get("DB_HOST"),os.environ.get("DB_PORT"),os.environ.get("DB_NAME")))
     finviz_report = pd.read_sql_query('select * from finviz_all_list', engine) #only select columns that show difference in values
     output = build_table(finviz_report, 'blue_light')
     engine.dispose()
     SendEmail(output,date.today())
 
 
-# def StockTwits():
-#     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:77.0) Gecko/20100101 Firefox/77.0'}
-#     page = requests.get("https://stocktwits.com/symbol/BNGO",headers= headers)
-#     soupysoupy = bs4.BeautifulSoup(page.text,'html.parser')
-#     bullish_bearish_count = []
-#     count = soupysoupy.find("div",{'class':'lib_XwnOHoV lib_3UzYkI9 lib_lPsmyQd lib_2TK8fEo'})
-#     for a in count:
-#         data = a.strip()
-#         bullish_bearish_count.append(data)
-#         print (data)
-
-#     print (bullish_bearish_count)
+def OpenPropertiesFile():
+    load_dotenv(dotenv_path='app-config.env')
+    
 
 def SendEmail(input_list,date):
     
+    #Initialize Properties File object
+    OpenPropertiesFile()
+
     #Initialize Key Details
-    email_sender_account = "chidachais@gmail.com"
-    email_sender_username = "chidachais@gmail.com"
-    email_sender_password = "Apple07101968!"
-    email_smtp_server = "smtp.gmail.com"
-    email_smtp_port = 587
+    email_sender_account = os.environ.get("email_sender_account")
+    email_sender_username = os.environ.get("email_sender_username")
+    email_sender_password = os.environ.get("email_sender_password")
+    email_smtp_server = os.environ.get("email_smtp_server")
+    email_smtp_port = os.environ.get("email_smtp_port")
 
     #Email Header
-    email_recepients = ["siddharthsai@supplychaininc.com"]
+    email_recepients = [os.environ.get("email_recepients")]
     email_subject = f"Finviz Stock Tracker for {date}"
     email_body = '<html><head></head><body>'
     email_body += '<style type="text/css"></style>' 
