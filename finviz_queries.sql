@@ -124,7 +124,7 @@ BEGIN
         AND fal."Current_RSI" = fal."Previous_RSI" 
         AND fal."Current_Price" = fal."Previous_Price" 
         AND fal."Current_Volume" = fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Initial SMA50 of ' || fal."Current_SMA50"
-        WHEN LEFT(fal."Current_SMA50",-1)::DECIMAL = LEFT(fal."Previous_SMA50",-1)::DECIMAL AND fal."Last_Updated_On" = CURRENT_DATE THEN 'No Change'
+        WHEN LEFT(fal."Current_SMA50",-1)::DECIMAL = LEFT(fal."Previous_SMA50",-1)::DECIMAL AND fal."Last_Updated_On" = CURRENT_DATE THEN 'No Change From ' || fal."Previous_SMA50"
         WHEN LEFT(fal."Current_SMA50",-1)::DECIMAL < LEFT(fal."Previous_SMA50",-1)::DECIMAL AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Decrease From ' || fal."Previous_SMA50" || ' to ' || fal."Current_SMA50"
         ELSE 'Not Applicable'
         END,
@@ -135,7 +135,7 @@ BEGIN
         AND fal."Current_RSI" = fal."Previous_RSI" 
         AND fal."Current_Price" = fal."Previous_Price" 
         AND fal."Current_Volume" = fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Initial RSI of ' || fal."Current_RSI"
-        WHEN fal."Current_RSI" = fal."Previous_RSI" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'No Change'
+        WHEN fal."Current_RSI" = fal."Previous_RSI" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'No Change From ' || fal."Previous_RSI"
         WHEN fal."Current_RSI" < fal."Previous_RSI" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Decrease From ' || fal."Previous_RSI" || ' to ' || fal."Current_RSI"
         ELSE 'Not Applicable'
         END,
@@ -146,7 +146,7 @@ BEGIN
         AND fal."Current_RSI" = fal."Previous_RSI" 
         AND fal."Current_Price" = fal."Previous_Price" 
         AND fal."Current_Volume" = fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Initial Price of ' || fal."Current_Price"
-        WHEN fal."Current_Price" = fal."Previous_Price" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'No Change'
+        WHEN fal."Current_Price" = fal."Previous_Price" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'No Change From ' || fal."Previous_Price"
         WHEN fal."Current_Price" < fal."Previous_Price" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Decrease From ' || fal."Previous_Price" || ' to ' || fal."Current_Price"
         ELSE 'Not Applicable'
         END,
@@ -157,7 +157,7 @@ BEGIN
         AND fal."Current_RSI" = fal."Previous_RSI" 
         AND fal."Current_Price" = fal."Previous_Price" 
         AND fal."Current_Volume" = fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Initial Volume of ' || fal."Current_Volume"
-        WHEN "Current_Volume" = fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'No Change'
+        WHEN "Current_Volume" = fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'No Change From ' || fal."Previous_Volume"
         WHEN "Current_Volume" < fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Decrease From ' || fal."Previous_Volume" || ' to ' || fal."Current_Volume"
         ELSE 'Not Applicable'
     END;
