@@ -58,7 +58,8 @@ def GenerateReport():
     #Take final output from finviz_all_list table, enhance table look, and send as email
     OpenPropertiesFile()
     engine = sqlalchemy.create_engine("postgresql+psycopg2://{}:{}@{}:{}/{}".format(os.environ.get("DB_USER"),os.environ.get("DB_PWD"),os.environ.get("DB_HOST"),os.environ.get("DB_PORT"),os.environ.get("DB_NAME")))
-    finviz_report = pd.read_sql_query('select "Count","Ticker","Initial_Insert","Last_Updated_On","Status","SMA50_Behavior","RSI_Behavior","Price_Behavior","Volume_Behavior" from finviz_all_list order by "Current_RSI"', engine) #only select columns that show difference in values
+    finviz_report = pd.read_sql_query('select "Count","Ticker","Initial_Insert","Last_Updated_On","Status","SMA50_Behavior","RSI_Behavior","Price_Behavior","Volume_Behavior" from finviz_all_list where "Status" in (%(value1)s,%(value2)s) order by "Count" desc, "Current_RSI"', 
+    engine, params = {"value1": 'NEW INSERT', "value2": 'UPDATED'}) #only select columns that show difference in values
     output = build_table(finviz_report, 'blue_light')
     engine.dispose()
     SendEmail(output,date.today())
