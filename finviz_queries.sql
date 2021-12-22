@@ -14,24 +14,24 @@ select count(*) from finviz_stock_screener;
 --Initial Insert
 DELETE FROM finviz_stock_screener;
 DELETE FROM finviz_all_list;
-INSERT INTO finviz_stock_screener ("Ticker", "Perf Month", "Avg Volume", "Price", "Volume")
-VALUES ('CHS', '1.89%', '3.20M', 88.88, 1111111); --can change values every time
+INSERT INTO finviz_stock_screener ("Ticker", "SMA50", "RSI", "Price", "Volume")
+VALUES ('CHS', '1.89%', 34.63, 88.88, 1111111); --can change values every time
 CALL finviz_all_list();
 select * from finviz_all_list order by "Count" desc;
 
 
 --Insert to detect change
 DELETE FROM finviz_stock_screener;
-INSERT INTO finviz_stock_screener ("Ticker", "Perf Month", "Avg Volume", "Price", "Volume")
-VALUES ('CHS', '2.94%', '4.39M', 44.44, 2222222); --can change values every time
+INSERT INTO finviz_stock_screener ("Ticker", "SMA50", "RSI", "Price", "Volume")
+VALUES ('CHS', '2.94%', 31.11, 44.44, 2222222); --can change values every time
 CALL finviz_all_list();
 select * from finviz_all_list order by "Count" desc;
 
 
 --Insert to detect additional changes (same as above but inserting new data)
 DELETE FROM finviz_stock_screener;
-INSERT INTO finviz_stock_screener ("Ticker", "Perf Month", "Avg Volume", "Price", "Volume")
-VALUES ('CHS', '4.93%', '8.49M', 22.22, 3333333); --can change values every time
+INSERT INTO finviz_stock_screener ("Ticker", "SMA50", "RSI", "Price", "Volume")
+VALUES ('CHS', '4.93%', 40.00, 22.22, 3333333); --can change values every time
 CALL finviz_all_list();
 select * from finviz_all_list order by "Count" desc;
 
