@@ -61,7 +61,7 @@ steps:
 
 - task: Pythonscript@0
   inputs:
-    scriptSource: 'Finviz_Stock_Screener'
+    scriptSource: 'filePath'
     scriptPath: './Finviz_Web_Scraping.py'
   env:
     DB_USER: $(DB_USER_DEVAZURE)
