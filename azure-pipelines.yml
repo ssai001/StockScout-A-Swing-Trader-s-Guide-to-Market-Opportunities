@@ -30,6 +30,31 @@ steps:
     pip install -r requirements.txt
   displayName: 'Install dependencies'
 
+- bash: |
+    echo $DB_USER
+    echo $DB_PWD
+    echo $DB_HOST
+    echo $DB_PORT
+    echo $DB_NAME
+    echo $email_sender_account
+    echo $email_sender_username
+    echo $email_sender_password
+    echo $email_smtp_server
+    echo $email_smtp_port
+    echo $email_recepients
+  env:
+    DB_USER: $(DB_USER)
+    DB_PWD: $(DB_PWD)
+    DB_HOST: $(DB_HOST)
+    DB_PORT: $(DB_PORT)
+    DB_NAME: $(DB_NAME)
+    email_sender_account: $(email_sender_account)
+    email_sender_username: $(email_sender_username)
+    email_sender_password: $(email_sender_password)
+    email_smtp_server: $(email_smtp_server)
+    email_smtp_port: $(email_smtp_port)
+    email_recepients: $(email_recepients)
+
 - script: |
     python Finviz_Web_Scraping.py
   displayName: 'Run Finviz_Web_Scraping.py script'
