@@ -3,8 +3,8 @@
 # Add steps that analyze code, save the dist with the build record, publish to a PyPI-compatible index, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/languages/python
 
-trigger:
-- Finviz_Web_Scraping
+# trigger:
+# - Finviz_Web_Scraping
 
 pool:
   vmImage: ubuntu-latest
@@ -30,7 +30,6 @@ steps:
     pip install -r requirements.txt
   displayName: 'Install dependencies'
 
-# - script: |
-#     pip install pytest pytest-azurepipelines
-#     pytest
-#   displayName: 'pytest'
+- script: |
+    python Finviz_Web_Scraping.py
+  displayName: 'Run Finviz_Web_Scraping.py script'
