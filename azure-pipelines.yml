@@ -10,7 +10,7 @@ pool:
 strategy:
   matrix:
     Python39:
-      python.version: '3.9'
+      python.version: '3.9.12'
 
 steps:
 - task: UsePythonVersion@0
