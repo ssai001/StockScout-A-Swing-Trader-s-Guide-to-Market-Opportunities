@@ -27,7 +27,7 @@ steps:
   inputs:
     scriptSource: 'filePath'
     scriptPath: './Finviz_Web_Scraping.py'
-  bash: |
+  - bash: |
     echo "Using secret variable: $(DB_USER_DEVAZURE)"
     echo "Using secret variable: $(DB_PWD_DEVAZURE)"
     echo "Using secret variable: $(DB_HOST_DEVAZURE)"
