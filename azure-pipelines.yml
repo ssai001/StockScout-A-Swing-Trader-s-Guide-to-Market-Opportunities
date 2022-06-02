@@ -28,17 +28,17 @@ steps:
     scriptSource: 'filePath'
     scriptPath: './Finviz_Web_Scraping.py'
   - bash: |
-    echo "Using secret variable: $(DB_USER_DEVAZURE)"
-    echo "Using secret variable: $(DB_PWD_DEVAZURE)"
-    echo "Using secret variable: $(DB_HOST_DEVAZURE)"
-    echo "Using secret variable: $(DB_PORT_DEVAZURE)"
-    echo "Using secret variable: $(DB_NAME_DEVAZURE)"
-    echo "Using secret variable: $(EMAIL_SENDER_ACCOUNT_DEVAZURE)"
-    echo "Using secret variable: $(EMAIL_SENDER_USERNAME_DEVAZURE)"
-    echo "Using secret variable: $(EMAIL_SENDER_PASSWORD_DEVAZURE)"
-    echo "Using secret variable: $(EMAIL_SMTP_SERVER_DEVAZURE)"
-    echo "Using secret variable: $(EMAIL_SMTP_PORT_DEVAZURE)"
-    echo "Using secret variable: $(EMAIL_RECEPIENTS_DEVAZURE)"
+      echo "Using secret variable: $(DB_USER_DEVAZURE)"
+      echo "Using secret variable: $(DB_PWD_DEVAZURE)"
+      echo "Using secret variable: $(DB_HOST_DEVAZURE)"
+      echo "Using secret variable: $(DB_PORT_DEVAZURE)"
+      echo "Using secret variable: $(DB_NAME_DEVAZURE)"
+      echo "Using secret variable: $(EMAIL_SENDER_ACCOUNT_DEVAZURE)"
+      echo "Using secret variable: $(EMAIL_SENDER_USERNAME_DEVAZURE)"
+      echo "Using secret variable: $(EMAIL_SENDER_PASSWORD_DEVAZURE)"
+      echo "Using secret variable: $(EMAIL_SMTP_SERVER_DEVAZURE)"
+      echo "Using secret variable: $(EMAIL_SMTP_PORT_DEVAZURE)"
+      echo "Using secret variable: $(EMAIL_RECEPIENTS_DEVAZURE)"
   env:
     DB_USER: $(DB_USER_DEVAZURE)
     DB_PWD: $(DB_PWD_DEVAZURE)
