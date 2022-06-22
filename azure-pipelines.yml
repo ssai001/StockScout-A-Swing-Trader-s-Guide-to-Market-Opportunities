@@ -3,7 +3,8 @@
 # Add steps that analyze code, save the dist with the build record, publish to a PyPI-compatible index, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/languages/python
 
-trigger: none
+trigger:
+- main
 
 pool:
   vmImage: ubuntu-latest
@@ -39,3 +40,9 @@ steps:
     email_smtp_server: $(EMAIL_SMTP_SERVER_DEVAZURE)
     email_smtp_port: $(EMAIL_SMTP_PORT_DEVAZURE)
     email_recepients: $(EMAIL_RECEPIENTS_DEVAZURE)
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
