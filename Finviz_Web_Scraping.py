@@ -36,6 +36,9 @@ def TickerDetection(request_url):
             appended_data_pd = appended_data_pd.reset_index(drop=True)
             appended_data_pd = appended_data_pd.drop_duplicates()
             appended_data_pd_trimmed = appended_data_pd[['Ticker', 'SMA50', 'RSI', 'Price', 'Volume']]
+            appended_data_pd_trimmed = appended_data_pd_trimmed.drop(appended_data_pd_trimmed[ (appended_data_pd_trimmed.Ticker == "-") | (appended_data_pd_trimmed.SMA50 == "-") 
+        | (appended_data_pd_trimmed.RSI == "-") | (appended_data_pd_trimmed.Price == "-") | (appended_data_pd_trimmed.Volume == "-")].index)
+
     OpenPropertiesFile()
     engine = sqlalchemy.create_engine("postgresql+psycopg2://{}:{}@{}:{}/{}".format(os.environ.get("DB_USER"),os.environ.get("DB_PWD"),os.environ.get("DB_HOST"),os.environ.get("DB_PORT"),os.environ.get("DB_NAME")))
     connection = engine.raw_connection()
