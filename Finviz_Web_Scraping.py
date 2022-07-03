@@ -78,7 +78,7 @@ def GenerateReport():
     output2 = build_table(finviz_report_new_insert, 'blue_light')
 
     engine.dispose()
-    SendEmail(output1,output2,date.today())
+    SendEmail(output1,output2,datetime.today().strftime('%Y-%m-%d'))
 
 
 def OpenPropertiesFile():
