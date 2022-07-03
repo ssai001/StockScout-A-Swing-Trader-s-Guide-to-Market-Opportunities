@@ -1,22 +1,29 @@
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from datetime import date
+from datetime import date, datetime
 from dotenv import load_dotenv
 from pretty_html_table import build_table
+import holidays
 import os
-import requests
 import pandas as pd
+import requests
 import smtplib
 import sqlalchemy
 
 
 def main():
+    
+    #Define URL links to be used and aggregate into a list
     swingtrade1 = "https://finviz.com/screener.ashx?v=171&f=fa_epsqoq_pos,fa_salesqoq_pos,sh_curvol_o1000,ta_beta_o1,ta_highlow20d_b5h,ta_highlow52w_a70h,ta_sma20_sa50,ta_sma200_sb50,ta_sma50_pa&ft=4&o=-perf13w"
     swingtrade2 = "https://finviz.com/screener.ashx?v=171&f=sh_avgvol_o500,sh_price_u40,sh_relvol_o0.75,ta_pattern_tlsupport2&ft=4&o=-volume"
     swingtrade3 = "https://finviz.com/screener.ashx?v=171&f=sh_avgvol_o500,sh_float_u50,sh_outstanding_u50,sh_relvol_o2&ft=4&o=-volume"
     finviz_url_list = [swingtrade1,swingtrade2,swingtrade3]
-    [TickerDetection(url) for url in finviz_url_list]
-    GenerateReport()
+    
+    #Get list of stock market holidays and only run functions if current trading day does not fall under a stock market holiday
+    stock_market_holiday_list = [str(date[0]) for date in holidays.UnitedStates(years=datetime.now().year).items()]
+    if datetime.today().strftime('%Y-%m-%d') not in stock_market_holiday_list:
+        [TickerDetection(url) for url in finviz_url_list]
+        GenerateReport()
 
 
 def TickerDetection(request_url):
@@ -71,7 +78,7 @@ def GenerateReport():
     output2 = build_table(finviz_report_new_insert, 'blue_light')
 
     engine.dispose()
-    SendEmail(output1,output2,date.today())
+    SendEmail(output1,output2,datetime.today().strftime('%Y-%m-%d'))
 
 
 def OpenPropertiesFile():
