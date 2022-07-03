@@ -20,7 +20,7 @@ def main():
     swingtrade3 = "https://finviz.com/screener.ashx?v=171&f=sh_avgvol_o500,sh_float_u50,sh_outstanding_u50,sh_relvol_o2&ft=4&o=-volume"
     finviz_url_list = [swingtrade1,swingtrade2,swingtrade3]
     
-    #Get list of stock market holidays and only run functions if current trading day does not fall under a stock market holiday
+    #Get list of stock market holidays and only run TickerDetection() and GenerateReport() functions if current trading day does not fall under a stock market holiday
     stock_market_holiday_list = [str(date[0]) for date in holidays.UnitedStates(years=datetime.now().year).items()]
     if datetime.today().strftime('%Y-%m-%d') not in stock_market_holiday_list:
         [TickerDetection(url) for url in finviz_url_list]
