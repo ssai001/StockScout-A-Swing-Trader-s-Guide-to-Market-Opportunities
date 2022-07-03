@@ -1,3 +1,4 @@
+#Import required libraries
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import date, datetime
@@ -46,6 +47,8 @@ def TickerDetection(request_url):
             appended_data_pd_trimmed = appended_data_pd_trimmed.drop(appended_data_pd_trimmed[ (appended_data_pd_trimmed.Ticker == "-") | (appended_data_pd_trimmed.SMA50 == "-") 
         | (appended_data_pd_trimmed.RSI == "-") | (appended_data_pd_trimmed.Price == "-") | (appended_data_pd_trimmed.Volume == "-")].index)
 
+    #Using sqlalchemy library, take appended_data_pd_trimmed and upload to finviz_stock_screener table in PostgreSQL
+    #All data is replaced in finviz_stock_screener during every run
     OpenPropertiesFile()
     engine = sqlalchemy.create_engine("postgresql+psycopg2://{}:{}@{}:{}/{}".format(os.environ.get("DB_USER"),os.environ.get("DB_PWD"),os.environ.get("DB_HOST"),os.environ.get("DB_PORT"),os.environ.get("DB_NAME")))
     connection = engine.raw_connection()
@@ -56,7 +59,10 @@ def TickerDetection(request_url):
             'RSI':  sqlalchemy.types.DECIMAL, 
             'Price': sqlalchemy.types.DECIMAL,
            'Volume': sqlalchemy.types.BIGINT})
-    cursor.execute("CALL finviz_all_list();") #add more columns to take difference between price/volume/etc...
+    
+    #Call stored procedure finviz_all_list() in PostgreSQL which inserts the new tickers generated from above into a new table called finviz_all_list
+    #If there are any repeated records in finviz_stock_screener that occur in a subsequent run, finviz_all_list will update the existing ticker with new information from Finviz.com on that day
+    cursor.execute("CALL finviz_all_list();")
     connection.commit()
     cursor.close()
     connection.close()
@@ -69,19 +75,24 @@ def GenerateReport():
     OpenPropertiesFile()
     engine = sqlalchemy.create_engine("postgresql+psycopg2://{}:{}@{}:{}/{}".format(os.environ.get("DB_USER"),os.environ.get("DB_PWD"),os.environ.get("DB_HOST"),os.environ.get("DB_PORT"),os.environ.get("DB_NAME")))
 
+    #Using data generated from finviz_all_list, filter important columns for both new and updated tickers which show change/difference in metrics
     finviz_report_updated = pd.read_sql_query('select "Count","Ticker","Initial_Insert","Last_Updated_On","SMA50_Behavior","RSI_Behavior","Price_Behavior","Volume_Behavior" from finviz_all_list where "Status" in (%(value1)s) order by "Count" desc, "Current_RSI" limit 15', 
-    engine, params = {"value1": 'UPDATED'}) #only select columns that show difference in values
+    engine, params = {"value1": 'UPDATED'})
     finviz_report_new_insert = pd.read_sql_query('select "Count","Ticker","Initial_Insert","Last_Updated_On","SMA50_Behavior","RSI_Behavior","Price_Behavior","Volume_Behavior" from finviz_all_list where "Status" in (%(value2)s) order by "Count" desc, "Current_RSI" limit 15', 
-    engine, params = {"value2": 'NEW INSERT'}) #only select columns that show difference in values
+    engine, params = {"value2": 'NEW INSERT'})
 
+    #Enhance table look of finviz_report_updated and finviz_report_new_insert
     output1 = build_table(finviz_report_updated, 'blue_light')
     output2 = build_table(finviz_report_new_insert, 'blue_light')
 
+    #Close sqlalchemy engine and call SendEmail() function to show outputted tables in email
     engine.dispose()
     SendEmail(output1,output2,datetime.today().strftime('%Y-%m-%d'))
 
 
 def OpenPropertiesFile():
+    
+    #Open app-config.env properties file and read environment variables
     load_dotenv(dotenv_path='app-config.env')
     
 
