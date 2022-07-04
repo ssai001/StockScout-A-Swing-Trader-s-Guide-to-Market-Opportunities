@@ -39,3 +39,12 @@ steps:
     email_smtp_server: $(EMAIL_SMTP_SERVER_DEVAZURE)
     email_smtp_port: $(EMAIL_SMTP_PORT_DEVAZURE)
     email_recepients: $(EMAIL_RECEPIENTS_DEVAZURE)
+
+- task: CopyFiles@2
+  inputs:
+    targetFolder: '$(Build.ArtifactStagingDirectory)'    
+ 
+- task: PublishBuildArtifacts@1    
+  displayName: 'Publish Artifact: drop'
+  inputs:
+    PathtoPublish: '$(build.artifactstagingdirectory)'
