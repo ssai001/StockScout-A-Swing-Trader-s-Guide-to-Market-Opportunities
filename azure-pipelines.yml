@@ -13,6 +13,10 @@ strategy:
       python.version: '3.9'
 
 steps:
+- bash: |
+    sudo timedatectl set-timezone America/New_York
+  displayName: 'Bash Script'
+  
 - task: UsePythonVersion@0
   inputs:
     versionSpec: '$(python.version)'
