@@ -86,7 +86,9 @@ CREATE OR REPLACE PROCEDURE finviz_all_list()
 AS $$
 DECLARE
     REC RECORD;
+    CURRENT_DATE_EST DATE;
 BEGIN
+    CURRENT_DATE_EST := TO_DATE(TO_CHAR(NOW()::DATE at time zone 'America/New_York', 'YYYY-MM-DD'),'YYYY-MM-DD');
     FOR REC in (SELECT * FROM finviz_stock_screener) 
     LOOP
         INSERT INTO finviz_all_list ("Count", "Ticker", "Current_SMA50", "Previous_SMA50",
@@ -95,7 +97,7 @@ BEGIN
         "Status", "SMA50_Behavior", "RSI_Behavior", "Price_Behavior", "Volume_Behavior")
         VALUES (1, REC."Ticker", REC."SMA50", REC."SMA50",
         REC."RSI", REC."RSI", REC."Price", REC."Price",
-        REC."Volume", REC."Volume", CURRENT_DATE, CURRENT_DATE,
+        REC."Volume", REC."Volume", CURRENT_DATE_EST, CURRENT_DATE_EST,
         'NEW INSERT','Initial SMA50','Initial RSI','Initial Price','Initial Volume')
         ON CONFLICT ("Ticker")
         DO
@@ -104,61 +106,61 @@ BEGIN
             "Current_RSI" = REC."RSI", "Previous_RSI" = finviz_all_list."Current_RSI", 
             "Current_Price" = REC."Price", "Previous_Price" = finviz_all_list."Current_Price",
             "Current_Volume" = REC."Volume", "Previous_Volume" = finviz_all_list."Current_Volume", 
-            "Last_Updated_On" = CURRENT_DATE;
+            "Last_Updated_On" = CURRENT_DATE_EST;
     END LOOP;
     UPDATE finviz_all_list AS fal
     SET 
     "Status" = CASE
-        WHEN fal."Count" = 1 AND fal."Last_Updated_On" = CURRENT_DATE THEN 'NEW INSERT'
+        WHEN fal."Count" = 1 AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'NEW INSERT'
         WHEN fal."Count" > 1 AND LEFT(fal."Current_SMA50",-1)::DECIMAL = LEFT(fal."Previous_SMA50",-1)::DECIMAL
         AND fal."Current_RSI" = fal."Previous_RSI" 
         AND fal."Current_Price" = fal."Previous_Price" 
-        AND fal."Current_Volume" = fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'NEW INSERT'
-        WHEN fal."Count" > 1 AND fal."Last_Updated_On" = CURRENT_DATE THEN 'UPDATED'
+        AND fal."Current_Volume" = fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'NEW INSERT'
+        WHEN fal."Count" > 1 AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'UPDATED'
         ELSE 'ARCHIVED'
         END,
     "SMA50_Behavior" = CASE
-        WHEN LEFT(fal."Current_SMA50",-1)::DECIMAL > LEFT(fal."Previous_SMA50",-1)::DECIMAL AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Increase From ' || fal."Previous_SMA50" || ' to ' || fal."Current_SMA50"
-        WHEN LEFT(fal."Current_SMA50",-1)::DECIMAL = LEFT(fal."Previous_SMA50",-1)::DECIMAL AND fal."Count" = 1 AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Initial SMA50 of ' || fal."Current_SMA50"
+        WHEN LEFT(fal."Current_SMA50",-1)::DECIMAL > LEFT(fal."Previous_SMA50",-1)::DECIMAL AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Increase From ' || fal."Previous_SMA50" || ' to ' || fal."Current_SMA50"
+        WHEN LEFT(fal."Current_SMA50",-1)::DECIMAL = LEFT(fal."Previous_SMA50",-1)::DECIMAL AND fal."Count" = 1 AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Initial SMA50 of ' || fal."Current_SMA50"
         WHEN fal."Count" > 1 AND LEFT(fal."Current_SMA50",-1)::DECIMAL = LEFT(fal."Previous_SMA50",-1)::DECIMAL 
         AND fal."Current_RSI" = fal."Previous_RSI" 
         AND fal."Current_Price" = fal."Previous_Price" 
-        AND fal."Current_Volume" = fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Initial SMA50 of ' || fal."Current_SMA50"
-        WHEN LEFT(fal."Current_SMA50",-1)::DECIMAL = LEFT(fal."Previous_SMA50",-1)::DECIMAL AND fal."Last_Updated_On" = CURRENT_DATE THEN 'No Change From ' || fal."Previous_SMA50"
-        WHEN LEFT(fal."Current_SMA50",-1)::DECIMAL < LEFT(fal."Previous_SMA50",-1)::DECIMAL AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Decrease From ' || fal."Previous_SMA50" || ' to ' || fal."Current_SMA50"
+        AND fal."Current_Volume" = fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Initial SMA50 of ' || fal."Current_SMA50"
+        WHEN LEFT(fal."Current_SMA50",-1)::DECIMAL = LEFT(fal."Previous_SMA50",-1)::DECIMAL AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'No Change From ' || fal."Previous_SMA50"
+        WHEN LEFT(fal."Current_SMA50",-1)::DECIMAL < LEFT(fal."Previous_SMA50",-1)::DECIMAL AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Decrease From ' || fal."Previous_SMA50" || ' to ' || fal."Current_SMA50"
         ELSE 'Not Applicable'
         END,
     "RSI_Behavior" = CASE
-        WHEN fal."Current_RSI" > fal."Previous_RSI" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Increase From ' || fal."Previous_RSI" || ' to ' || fal."Current_RSI"
-        WHEN fal."Current_RSI" = fal."Previous_RSI" AND fal."Count" = 1 AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Initial RSI of ' || fal."Current_RSI"
+        WHEN fal."Current_RSI" > fal."Previous_RSI" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Increase From ' || fal."Previous_RSI" || ' to ' || fal."Current_RSI"
+        WHEN fal."Current_RSI" = fal."Previous_RSI" AND fal."Count" = 1 AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Initial RSI of ' || fal."Current_RSI"
         WHEN fal."Count" > 1 AND LEFT(fal."Current_SMA50",-1)::DECIMAL = LEFT(fal."Previous_SMA50",-1)::DECIMAL 
         AND fal."Current_RSI" = fal."Previous_RSI" 
         AND fal."Current_Price" = fal."Previous_Price" 
-        AND fal."Current_Volume" = fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Initial RSI of ' || fal."Current_RSI"
-        WHEN fal."Current_RSI" = fal."Previous_RSI" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'No Change From ' || fal."Previous_RSI"
-        WHEN fal."Current_RSI" < fal."Previous_RSI" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Decrease From ' || fal."Previous_RSI" || ' to ' || fal."Current_RSI"
+        AND fal."Current_Volume" = fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Initial RSI of ' || fal."Current_RSI"
+        WHEN fal."Current_RSI" = fal."Previous_RSI" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'No Change From ' || fal."Previous_RSI"
+        WHEN fal."Current_RSI" < fal."Previous_RSI" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Decrease From ' || fal."Previous_RSI" || ' to ' || fal."Current_RSI"
         ELSE 'Not Applicable'
         END,
     "Price_Behavior" = CASE
-        WHEN fal."Current_Price" > fal."Previous_Price" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Increase From ' || fal."Previous_Price" || ' to ' || fal."Current_Price"
-        WHEN fal."Current_Price" = fal."Previous_Price" AND fal."Count" = 1 AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Initial Price of ' || fal."Current_Price"
+        WHEN fal."Current_Price" > fal."Previous_Price" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Increase From ' || fal."Previous_Price" || ' to ' || fal."Current_Price"
+        WHEN fal."Current_Price" = fal."Previous_Price" AND fal."Count" = 1 AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Initial Price of ' || fal."Current_Price"
         WHEN fal."Count" > 1 AND LEFT(fal."Current_SMA50",-1)::DECIMAL = LEFT(fal."Previous_SMA50",-1)::DECIMAL 
         AND fal."Current_RSI" = fal."Previous_RSI" 
         AND fal."Current_Price" = fal."Previous_Price" 
-        AND fal."Current_Volume" = fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Initial Price of ' || fal."Current_Price"
-        WHEN fal."Current_Price" = fal."Previous_Price" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'No Change From ' || fal."Previous_Price"
-        WHEN fal."Current_Price" < fal."Previous_Price" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Decrease From ' || fal."Previous_Price" || ' to ' || fal."Current_Price"
+        AND fal."Current_Volume" = fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Initial Price of ' || fal."Current_Price"
+        WHEN fal."Current_Price" = fal."Previous_Price" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'No Change From ' || fal."Previous_Price"
+        WHEN fal."Current_Price" < fal."Previous_Price" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Decrease From ' || fal."Previous_Price" || ' to ' || fal."Current_Price"
         ELSE 'Not Applicable'
         END,
     "Volume_Behavior" = CASE
-        WHEN fal."Current_Volume" > "Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Increase From ' || fal."Previous_Volume" || ' to ' || fal."Current_Volume"
-        WHEN fal."Current_Volume" = fal."Previous_Volume" AND fal."Count" = 1 AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Initial Volume of ' || fal."Current_Volume"
+        WHEN fal."Current_Volume" > "Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Increase From ' || fal."Previous_Volume" || ' to ' || fal."Current_Volume"
+        WHEN fal."Current_Volume" = fal."Previous_Volume" AND fal."Count" = 1 AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Initial Volume of ' || fal."Current_Volume"
         WHEN fal."Count" > 1 AND LEFT(fal."Current_SMA50",-1)::DECIMAL = LEFT(fal."Previous_SMA50",-1)::DECIMAL 
         AND fal."Current_RSI" = fal."Previous_RSI" 
         AND fal."Current_Price" = fal."Previous_Price" 
-        AND fal."Current_Volume" = fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Initial Volume of ' || fal."Current_Volume"
-        WHEN "Current_Volume" = fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'No Change From ' || fal."Previous_Volume"
-        WHEN "Current_Volume" < fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE THEN 'Decrease From ' || fal."Previous_Volume" || ' to ' || fal."Current_Volume"
+        AND fal."Current_Volume" = fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Initial Volume of ' || fal."Current_Volume"
+        WHEN "Current_Volume" = fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'No Change From ' || fal."Previous_Volume"
+        WHEN "Current_Volume" < fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Decrease From ' || fal."Previous_Volume" || ' to ' || fal."Current_Volume"
         ELSE 'Not Applicable'
     END;
 END;
