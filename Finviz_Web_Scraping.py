@@ -83,7 +83,7 @@ def GenerateReport():
 
     #Enhance table look of finviz_report_updated and finviz_report_new_insert
     output1 = build_table(finviz_report_updated, 'blue_light')
-    output2 = build_table(finviz_report_new_insert, 'green_light')
+    output2 = build_table(finviz_report_new_insert, 'blue_light')
 
     #Close sqlalchemy engine and call SendEmail() function to show outputted tables in email
     engine.dispose()
