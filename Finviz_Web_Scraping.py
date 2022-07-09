@@ -43,17 +43,22 @@ def TickerDetection(request_url):
             appended_data_pd = pd.concat(appended_data)
             appended_data_pd = appended_data_pd.reset_index(drop=True)
             appended_data_pd = appended_data_pd.drop_duplicates()
-            appended_data_pd_trimmed = appended_data_pd[['Ticker', 'SMA50', 'RSI', 'Price', 'Volume']]
-            appended_data_pd_trimmed = appended_data_pd_trimmed.drop(appended_data_pd_trimmed[ (appended_data_pd_trimmed.Ticker == "-") | (appended_data_pd_trimmed.SMA50 == "-") 
-        | (appended_data_pd_trimmed.RSI == "-") | (appended_data_pd_trimmed.Price == "-") | (appended_data_pd_trimmed.Volume == "-")].index)
+            try:
+                appended_data_pd = appended_data_pd[['Ticker', 'SMA50', 'RSI', 'Price', 'Volume']]
+                appended_data_pd = appended_data_pd.drop(appended_data_pd[ (appended_data_pd.Ticker == "-") | (appended_data_pd.SMA50 == "-") 
+            | (appended_data_pd.RSI == "-") | (appended_data_pd.Price == "-") | (appended_data_pd.Volume == "-")].index)
+            except KeyError:
+                if i == 20:
+                    print ("Exception: One or more of the URL links does not contain any records")
+            
 
-    #Using sqlalchemy library, take appended_data_pd_trimmed and upload to finviz_stock_screener table in PostgreSQL
+    #Using sqlalchemy library, take appended_data_pd and upload to finviz_stock_screener table in PostgreSQL
     #All data is replaced in finviz_stock_screener during every run
     OpenPropertiesFile()
     engine = sqlalchemy.create_engine("postgresql+psycopg2://{}:{}@{}:{}/{}".format(os.environ.get("DB_USER"),os.environ.get("DB_PWD"),os.environ.get("DB_HOST"),os.environ.get("DB_PORT"),os.environ.get("DB_NAME")))
     connection = engine.raw_connection()
     cursor = connection.cursor()
-    appended_data_pd_trimmed.to_sql('finviz_stock_screener', engine, if_exists='replace',
+    appended_data_pd.to_sql('finviz_stock_screener', engine, if_exists='replace',
     dtype={'Ticker': sqlalchemy.VARCHAR(20), 
             'SMA50': sqlalchemy.types.VARCHAR(20), 
             'RSI':  sqlalchemy.types.DECIMAL, 
