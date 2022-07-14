@@ -23,6 +23,7 @@ def main():
     #Get list of stock market holidays and only run TickerDetection() and GenerateReport() functions if current trading day does not fall under a stock market holiday
     stock_market_holiday_list = [str(date[0]) for date in holidays.UnitedStates(years=datetime.now().year).items()]
     if datetime.today().strftime('%Y-%m-%d') not in stock_market_holiday_list:
+        DataRefresh()
         [TickerDetection(url) for url in finviz_url_list]
         GenerateReport()
 
@@ -93,6 +94,25 @@ def GenerateReport():
     #Close sqlalchemy engine and call SendEmail() function to show outputted tables in email
     engine.dispose()
     SendEmail(output1,output2,datetime.today().strftime('%Y-%m-%d'))
+
+
+def DataRefresh():
+    
+    #Initialize connection
+    engine = sqlalchemy.create_engine("postgresql+psycopg2://{}:{}@{}:{}/{}".format(os.environ.get("DB_USER"),os.environ.get("DB_PWD"),os.environ.get("DB_HOST"),os.environ.get("DB_PORT"),os.environ.get("DB_NAME")))
+
+    #Get the first weekday of the month. If its a holiday, then get the next weekday
+    first_weekday_list = pd.date_range(date(date.today().year, 1, 1), date(date.today().year, 12, 31), freq='BMS')
+    first_weekday_list = first_weekday_list.strftime("%Y-%m-%d").tolist()
+    
+    #Delete all data from finviz_stock_screener and finviz_all_list on first business day of the month 
+    if datetime.today().strftime('%Y-%m-%d') in first_weekday_list:
+        pd.read_sql_query('delete * from finviz_all_list', engine)
+        pd.read_sql_query('delete * from finviz_stock_screener', engine)
+
+    #Close sqlalchemy connection
+    engine.dispose()
+    pass
 
 
 def OpenPropertiesFile():
