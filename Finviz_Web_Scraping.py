@@ -5,11 +5,14 @@ from datetime import date, datetime
 from dotenv import load_dotenv
 from pretty_html_table import build_table
 import holidays
+import json
 import os
 import pandas as pd
 import requests
 import smtplib
 import sqlalchemy
+import urllib
+
 
 
 def main():
@@ -73,6 +76,13 @@ def TickerDetection(request_url):
     cursor.close()
     connection.close()
     engine.dispose()
+    
+
+def get_stock_name(symbol):
+    response = urllib.request.urlopen(f'https://query2.finance.yahoo.com/v1/finance/search?q={symbol}')
+    content = response.read()
+    data = json.loads(content.decode('utf8'))['quotes'][0]['shortname']
+    return data
 
 
 def GenerateReport():  
@@ -107,8 +117,8 @@ def DataRefresh():
     
     #Delete all data from finviz_stock_screener and finviz_all_list on first business day of the month 
     if datetime.today().strftime('%Y-%m-%d') in first_weekday_list:
-        pd.read_sql_query('delete * from finviz_all_list', engine)
-        pd.read_sql_query('delete * from finviz_stock_screener', engine)
+        pd.read_sql_query('delete from finviz_all_list', engine)
+        pd.read_sql_query('delete from finviz_stock_screener', engine)
 
     #Close sqlalchemy connection
     engine.dispose()
