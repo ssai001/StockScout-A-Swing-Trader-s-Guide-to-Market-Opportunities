@@ -26,7 +26,7 @@ def main():
     #Get list of stock market holidays and only run TickerDetection() and GenerateReport() functions if current trading day does not fall under a stock market holiday
     stock_market_holiday_list = [str(date[0]) for date in holidays.UnitedStates(years=datetime.now().year).items()]
     if datetime.today().strftime('%Y-%m-%d') not in stock_market_holiday_list:
-        DataRefresh()
+        #DataRefresh()
         [TickerDetection(url) for url in finviz_url_list]
         GenerateReport()
 
