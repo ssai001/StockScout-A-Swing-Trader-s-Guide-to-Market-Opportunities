@@ -144,7 +144,7 @@ def SendEmail(input_list_1,input_list_2,date):
     email_smtp_port = os.environ.get("email_smtp_port")
 
     #Email Header
-    email_recepients = [os.environ.get("email_recepients")]
+    email_recepients = os.environ.get("email_recepients").split(",")
     email_subject = f"Finviz Stock Tracker for {date}"
     email_body = '<html><head></head><body>' 
     
