@@ -59,10 +59,9 @@ def TickerDetection(request_url):
     #Using sqlalchemy library, take appended_data_pd and upload to finviz_stock_screener table in PostgreSQL
     #All data is replaced in finviz_stock_screener during every run
     OpenPropertiesFile()
-    engine = sqlalchemy.create_engine("postgresql+psycopg2://{}:{}@{}:{}/{}".format(os.environ.get("DB_USER"),os.environ.get("DB_PWD"),os.environ.get("DB_HOST"),os.environ.get("DB_PORT"),os.environ.get("DB_NAME")))
-    connection = engine.raw_connection()
+    connection = SQLEngine().raw_connection()
     cursor = connection.cursor()
-    appended_data_pd.to_sql('finviz_stock_screener', engine, if_exists='replace',
+    appended_data_pd.to_sql('finviz_stock_screener', SQLEngine(), if_exists='replace',
     dtype={'Ticker': sqlalchemy.VARCHAR(20), 
             'SMA50': sqlalchemy.types.VARCHAR(20), 
             'RSI':  sqlalchemy.types.DECIMAL, 
@@ -75,7 +74,7 @@ def TickerDetection(request_url):
     connection.commit()
     cursor.close()
     connection.close()
-    engine.dispose()
+    SQLEngine().dispose()
     
 
 def get_stock_name(symbol):
@@ -89,27 +88,25 @@ def GenerateReport():
 
     #Take final output from finviz_all_list table, enhance table look, and send as email
     OpenPropertiesFile()
-    engine = sqlalchemy.create_engine("postgresql+psycopg2://{}:{}@{}:{}/{}".format(os.environ.get("DB_USER"),os.environ.get("DB_PWD"),os.environ.get("DB_HOST"),os.environ.get("DB_PORT"),os.environ.get("DB_NAME")))
 
     #Using data generated from finviz_all_list, filter important columns for both new and updated tickers which show change/difference in metrics
-    finviz_report_updated = pd.read_sql_query('select "Count","Ticker","Initial_Insert","Last_Updated_On","SMA50_Behavior","RSI_Behavior","Price_Behavior","Volume_Behavior" from finviz_all_list where "Status" in (%(value1)s) order by "Count" desc, "Current_RSI" limit 15', 
-    engine, params = {"value1": 'UPDATED'})
-    finviz_report_new_insert = pd.read_sql_query('select "Count","Ticker","Initial_Insert","Last_Updated_On","SMA50_Behavior","RSI_Behavior","Price_Behavior","Volume_Behavior" from finviz_all_list where "Status" in (%(value2)s) order by "Count" desc, "Current_RSI" limit 15', 
-    engine, params = {"value2": 'NEW INSERT'})
+    finviz_report_updated = pd.read_sql_query('select "Count","Ticker","Initial_Insert","Last_Updated_On","SMA50_Behavior","RSI_Behavior","Price_Behavior","Volume_Behavior" from finviz_all_list where "Status" in (%(value1)s) order by "Count" desc, "Current_RSI" limit 25', 
+    SQLEngine(), params = {"value1": 'UPDATED'})
+    finviz_report_new_insert = pd.read_sql_query('select "Count","Ticker","Initial_Insert","Last_Updated_On","SMA50_Behavior","RSI_Behavior","Price_Behavior","Volume_Behavior" from finviz_all_list where "Status" in (%(value2)s) order by "Count" desc, "Current_RSI" limit 25', 
+    SQLEngine(), params = {"value2": 'NEW INSERT'})
 
     #Enhance table look of finviz_report_updated and finviz_report_new_insert
     output1 = build_table(finviz_report_updated, 'blue_light')
     output2 = build_table(finviz_report_new_insert, 'blue_light')
 
     #Close sqlalchemy engine and call SendEmail() function to show outputted tables in email
-    engine.dispose()
+    SQLEngine().dispose()
     SendEmail(output1,output2,datetime.today().strftime('%Y-%m-%d'))
 
 
 def DataRefresh():
     
     #Initialize connection
-    engine = sqlalchemy.create_engine("postgresql+psycopg2://{}:{}@{}:{}/{}".format(os.environ.get("DB_USER"),os.environ.get("DB_PWD"),os.environ.get("DB_HOST"),os.environ.get("DB_PORT"),os.environ.get("DB_NAME")))
 
     #Get the first weekday of the month. If its a holiday, then get the next weekday
     first_weekday_list = pd.date_range(date(date.today().year, 1, 1), date(date.today().year, 12, 31), freq='BMS')
@@ -117,13 +114,17 @@ def DataRefresh():
     
     #Delete all data from finviz_stock_screener and finviz_all_list on first business day of the month 
     if datetime.today().strftime('%Y-%m-%d') in first_weekday_list:
-        pd.read_sql_query('delete from finviz_all_list', engine)
-        pd.read_sql_query('delete from finviz_stock_screener', engine)
+        pd.read_sql_query('delete from finviz_all_list', SQLEngine())
+        pd.read_sql_query('delete from finviz_stock_screener', SQLEngine())
 
     #Close sqlalchemy connection
-    engine.dispose()
+    SQLEngine().dispose()
     pass
 
+
+def SQLEngine():
+    engine = sqlalchemy.create_engine("postgresql+psycopg2://{}:{}@{}:{}/{}".format(os.environ.get("DB_USER"),os.environ.get("DB_PWD"),os.environ.get("DB_HOST"),os.environ.get("DB_PORT"),os.environ.get("DB_NAME")))
+    return engine
 
 def OpenPropertiesFile():
     
