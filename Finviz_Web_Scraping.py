@@ -3,7 +3,9 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import date, datetime
 from dotenv import load_dotenv
+from IPython.display import HTML
 from pretty_html_table import build_table
+import bs4
 import holidays
 import json
 import os
@@ -54,8 +56,19 @@ def TickerDetection(request_url):
             except KeyError:
                 if i == 20:
                     print ("Exception: One or more of the URL links does not contain any records")
+        
             
-
+    #Append new columns including the following information: stock_name, reference url link, stock sector, and stock industry
+    appended_data_pd["Name"] = [GetStockName(i) for i in appended_data_pd["Ticker"].tolist()]
+    appended_data_pd["URL"] = [GetTickerWebsiteReference(i) for i in appended_data_pd["Ticker"].tolist()]
+    appended_data_pd["Sector"] = [GetStockSector(i) for i in appended_data_pd["Ticker"].tolist()]
+    appended_data_pd["Industry"] = [GetStockIndustry(i) for i in appended_data_pd["Ticker"].tolist()]
+   
+    
+    # appended_data_pd['Ticker'] = appended_data_pd['Ticker'].apply(lambda x: f'<a href="https://finviz.com/quote.ashx?t={x}">{x}</a>')
+    # HTML(appended_data_pd.to_html(escape=False))
+    
+    
     #Using sqlalchemy library, take appended_data_pd and upload to finviz_stock_screener table in PostgreSQL
     #All data is replaced in finviz_stock_screener during every run
     OpenPropertiesFile()
@@ -66,10 +79,14 @@ def TickerDetection(request_url):
             'SMA50': sqlalchemy.types.VARCHAR(20), 
             'RSI':  sqlalchemy.types.DECIMAL, 
             'Price': sqlalchemy.types.DECIMAL,
-           'Volume': sqlalchemy.types.BIGINT})
+            'Volume': sqlalchemy.types.BIGINT,
+            'Name': sqlalchemy.VARCHAR(50),
+            'URL': sqlalchemy.VARCHAR(50),
+            'Sector': sqlalchemy.VARCHAR(50),
+            'Industry': sqlalchemy.VARCHAR(50)})
     
-    #Call stored procedure finviz_all_list() in PostgreSQL which inserts the new tickers generated from above into a new table called finviz_all_list
-    #If there are any repeated records in finviz_stock_screener that occur in a subsequent run, finviz_all_list will update the existing ticker with new information from Finviz.com on that day
+    # #Call stored procedure finviz_all_list() in PostgreSQL which inserts the new tickers generated from above into a new table called finviz_all_list
+    # #If there are any repeated records in finviz_stock_screener that occur in a subsequent run, finviz_all_list will update the existing ticker with new information from Finviz.com on that day
     cursor.execute("CALL finviz_all_list();")
     connection.commit()
     cursor.close()
@@ -77,11 +94,34 @@ def TickerDetection(request_url):
     SQLEngine().dispose()
     
 
-def get_stock_name(symbol):
-    response = urllib.request.urlopen(f'https://query2.finance.yahoo.com/v1/finance/search?q={symbol}')
+def GetStockName(ticker):
+    response = urllib.request.urlopen(f'https://query2.finance.yahoo.com/v1/finance/search?q={ticker}')
     content = response.read()
     data = json.loads(content.decode('utf8'))['quotes'][0]['shortname']
     return data
+
+
+def GetTickerWebsiteReference(ticker):
+    url_link = "https://finviz.com/quote.ashx?t={}".format(ticker)
+    return url_link
+
+
+def GetStockSector(ticker):
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:77.0) Gecko/20100101 Firefox/77.0'}
+    page = requests.get("https://finviz.com/quote.ashx?t={}".format(ticker), headers= headers)
+    soupysoupy = bs4.BeautifulSoup(page.text,'html.parser')
+    tags = soupysoupy.find_all('a', {'class': 'tab-link', 'href': True})
+    sector = str(tags[1]).split(">")[1][:-3]
+    return sector
+
+
+def GetStockIndustry(ticker):
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:77.0) Gecko/20100101 Firefox/77.0'}
+    page = requests.get("https://finviz.com/quote.ashx?t={}".format(ticker), headers= headers)
+    soupysoupy = bs4.BeautifulSoup(page.text,'html.parser')
+    tags = soupysoupy.find_all('a', {'class': 'tab-link', 'href': True})
+    industry = str(tags[2]).split(">")[1][:-3]
+    return industry
 
 
 def GenerateReport():  
@@ -90,9 +130,9 @@ def GenerateReport():
     OpenPropertiesFile()
 
     #Using data generated from finviz_all_list, filter important columns for both new and updated tickers which show change/difference in metrics
-    finviz_report_updated = pd.read_sql_query('select "Count","Ticker","Initial_Insert","Last_Updated_On","SMA50_Behavior","RSI_Behavior","Price_Behavior","Volume_Behavior" from finviz_all_list where "Status" in (%(value1)s) order by "Count" desc, "Current_RSI" limit 25', 
+    finviz_report_updated = pd.read_sql_query('select "Count","Ticker","Name","URL","Sector","Industry","Initial_Insert","Last_Updated_On","SMA50_Behavior","RSI_Behavior","Price_Behavior","Volume_Behavior" from finviz_all_list where "Status" in (%(value1)s) order by "Count" desc, "Current_RSI" limit 25', 
     SQLEngine(), params = {"value1": 'UPDATED'})
-    finviz_report_new_insert = pd.read_sql_query('select "Count","Ticker","Initial_Insert","Last_Updated_On","SMA50_Behavior","RSI_Behavior","Price_Behavior","Volume_Behavior" from finviz_all_list where "Status" in (%(value2)s) order by "Count" desc, "Current_RSI" limit 25', 
+    finviz_report_new_insert = pd.read_sql_query('select "Count","Ticker","Name","URL","Sector","Industry","Initial_Insert","Last_Updated_On","SMA50_Behavior","RSI_Behavior","Price_Behavior","Volume_Behavior" from finviz_all_list where "Status" in (%(value2)s) order by "Count" desc, "Current_RSI" limit 25', 
     SQLEngine(), params = {"value2": 'NEW INSERT'})
 
     #Enhance table look of finviz_report_updated and finviz_report_new_insert

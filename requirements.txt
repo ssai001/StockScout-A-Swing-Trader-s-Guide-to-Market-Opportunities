@@ -8,3 +8,5 @@ jproperties==2.1.1
 python-dotenv==0.19.
 APScheduler==3.8.1
 holidays==0.14.2
+beautifulsoup4==4.11.1
+ipython==8.4.0
