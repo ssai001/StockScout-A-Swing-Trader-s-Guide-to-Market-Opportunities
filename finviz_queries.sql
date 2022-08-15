@@ -65,19 +65,35 @@ CREATE TABLE finviz_all_list(
 
 
 ---------------------------Queries to alter tables----------------------------------------------
-ALTER TABLE finviz_all_list ADD CONSTRAINT uniqueticker UNIQUE ("Ticker");
+ALTER TABLE finviz_stock_screener ADD COLUMN "Name" VARCHAR(50);
+ALTER TABLE finviz_stock_screener ADD COLUMN "URL" VARCHAR(50);
+ALTER TABLE finviz_stock_screener ADD COLUMN "Sector" VARCHAR(50);
+ALTER TABLE finviz_stock_screener ADD COLUMN "Industry" VARCHAR(50);
+ALTER TABLE finviz_stock_screener ALTER COLUMN "Name" SET NOT NULL;
+ALTER TABLE finviz_stock_screener ALTER COLUMN "URL" SET NOT NULL;
+ALTER TABLE finviz_stock_screener ALTER COLUMN "Sector" SET NOT NULL;
+ALTER TABLE finviz_stock_screener ALTER COLUMN "Industry" SET NOT NULL;
 
+
+ALTER TABLE finviz_all_list ADD CONSTRAINT uniqueticker UNIQUE ("Ticker");
 ALTER TABLE finviz_all_list ADD COLUMN "Status" TEXT;
 ALTER TABLE finviz_all_list ADD COLUMN "SMA50_Behavior" TEXT;
 ALTER TABLE finviz_all_list ADD COLUMN "RSI_Behavior" TEXT;
 ALTER TABLE finviz_all_list ADD COLUMN "Price_Behavior" TEXT;
 ALTER TABLE finviz_all_list ADD COLUMN "Volume_Behavior" TEXT;
-
+ALTER TABLE finviz_all_list ADD COLUMN "Name" VARCHAR(50);
+ALTER TABLE finviz_all_list ADD COLUMN "URL" VARCHAR(50);
+ALTER TABLE finviz_all_list ADD COLUMN "Sector" VARCHAR(50);
+ALTER TABLE finviz_all_list ADD COLUMN "Industry" VARCHAR(50);
 ALTER TABLE finviz_all_list ALTER COLUMN "Status" SET NOT NULL;
 ALTER TABLE finviz_all_list ALTER COLUMN "SMA50_Behavior" SET NOT NULL;
 ALTER TABLE finviz_all_list ALTER COLUMN "RSI_Behavior" SET NOT NULL;
 ALTER TABLE finviz_all_list ALTER COLUMN "Price_Behavior" SET NOT NULL;
 ALTER TABLE finviz_all_list ALTER COLUMN "Volume_Behavior" SET NOT NULL;
+ALTER TABLE finviz_all_list ALTER COLUMN "Name" SET NOT NULL;
+ALTER TABLE finviz_all_list ALTER COLUMN "URL" SET NOT NULL;
+ALTER TABLE finviz_all_list ALTER COLUMN "Sector" SET NOT NULL;
+ALTER TABLE finviz_all_list ALTER COLUMN "Industry" SET NOT NULL;
 -----------------------------------------------------------------------------------------------
 
 
@@ -94,11 +110,13 @@ BEGIN
         INSERT INTO finviz_all_list ("Count", "Ticker", "Current_SMA50", "Previous_SMA50",
         "Current_RSI", "Previous_RSI", "Current_Price", "Previous_Price",
         "Current_Volume", "Previous_Volume", "Initial_Insert", "Last_Updated_On",
-        "Status", "SMA50_Behavior", "RSI_Behavior", "Price_Behavior", "Volume_Behavior")
+        "Status", "SMA50_Behavior", "RSI_Behavior", "Price_Behavior", "Volume_Behavior",
+        "Name", "URL", "Sector", "Industry")
         VALUES (1, REC."Ticker", REC."SMA50", REC."SMA50",
         REC."RSI", REC."RSI", REC."Price", REC."Price",
         REC."Volume", REC."Volume", CURRENT_DATE_EST, CURRENT_DATE_EST,
-        'NEW INSERT','Initial SMA50','Initial RSI','Initial Price','Initial Volume')
+        'NEW INSERT','Initial SMA50','Initial RSI','Initial Price','Initial Volume',
+        REC."Name", REC."URL", REC."Sector", REC."Industry")
         ON CONFLICT ("Ticker")
         DO
             UPDATE SET "Count" = finviz_all_list."Count" + 1, 
