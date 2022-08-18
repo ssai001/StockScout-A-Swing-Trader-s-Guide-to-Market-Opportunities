@@ -13,7 +13,6 @@ import pandas as pd
 import requests
 import smtplib
 import sqlalchemy
-import time
 import urllib
 
 
@@ -54,7 +53,6 @@ def TickerDetection(request_url):
                 appended_data_pd = appended_data_pd[['Ticker', 'SMA50', 'RSI', 'Price', 'Volume']]
                 appended_data_pd = appended_data_pd.drop(appended_data_pd[ (appended_data_pd.Ticker == "-") | (appended_data_pd.SMA50 == "-") 
                 | (appended_data_pd.RSI == "-") | (appended_data_pd.Price == "-") | (appended_data_pd.Volume == "-")].index)
-                time.sleep(5)
             except KeyError:
                 if i == 20:
                     print ("Exception: One or more of the URL links does not contain any records")
@@ -62,13 +60,9 @@ def TickerDetection(request_url):
             
     #Append new columns including the following information: stock_name, reference url link, stock sector, and stock industry
     appended_data_pd["Name"] = [GetStockName(i) for i in appended_data_pd["Ticker"].tolist()]
-    time.sleep(5)
     appended_data_pd["URL"] = [GetTickerWebsiteReference(i) for i in appended_data_pd["Ticker"].tolist()]
-    time.sleep(5)
-    appended_data_pd["Sector"] = ["TEST" for i in appended_data_pd["Ticker"].tolist()]
-    time.sleep(5)
+    appended_data_pd["Sector"] = [GetStockSector(i) for i in appended_data_pd["Ticker"].tolist()]
     appended_data_pd["Industry"] = [GetStockIndustry(i) for i in appended_data_pd["Ticker"].tolist()]
-    time.sleep(5)
    
     
     # appended_data_pd['Ticker'] = appended_data_pd['Ticker'].apply(lambda x: f'<a href="https://finviz.com/quote.ashx?t={x}">{x}</a>')
