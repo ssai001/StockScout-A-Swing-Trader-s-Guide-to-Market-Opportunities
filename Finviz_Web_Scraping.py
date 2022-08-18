@@ -111,6 +111,7 @@ def GetStockSector(ticker):
     page = requests.get("https://finviz.com/quote.ashx?t={}".format(ticker), headers= headers)
     soupysoupy = bs4.BeautifulSoup(page.text,'html.parser')
     tags = soupysoupy.find_all('a', {'class': 'tab-link', 'href': True})
+    print (tags)
     sector = str(tags[1]).split(">")[1][:-3]
     return sector
 
