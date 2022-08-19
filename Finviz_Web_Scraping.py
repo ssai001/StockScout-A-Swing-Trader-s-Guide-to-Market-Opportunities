@@ -5,15 +5,12 @@ from datetime import date, datetime
 from dotenv import load_dotenv
 from IPython.display import HTML
 from pretty_html_table import build_table
-import bs4
 import holidays
-import json
 import os
 import pandas as pd
 import requests
 import smtplib
 import sqlalchemy
-import urllib
 
 
 
@@ -29,8 +26,8 @@ def main():
     stock_market_holiday_list = [str(date[0]) for date in holidays.UnitedStates(years=datetime.now().year).items()]
     if datetime.today().strftime('%Y-%m-%d') not in stock_market_holiday_list:
         #DataRefresh()
-        [TickerDetection(url) for url in finviz_url_list]
-        GenerateReport()
+       [TickerDetection(url) for url in finviz_url_list]
+       GenerateReport()
 
 
 def TickerDetection(request_url):
@@ -53,17 +50,14 @@ def TickerDetection(request_url):
                 appended_data_pd = appended_data_pd[['Ticker', 'SMA50', 'RSI', 'Price', 'Volume']]
                 appended_data_pd = appended_data_pd.drop(appended_data_pd[ (appended_data_pd.Ticker == "-") | (appended_data_pd.SMA50 == "-") 
                 | (appended_data_pd.RSI == "-") | (appended_data_pd.Price == "-") | (appended_data_pd.Volume == "-")].index)
+                appended_data_pd = appended_data_pd.merge(GetNameSectorIndustry(request_url), on='Ticker')
+                appended_data_pd["URL"] = [GetTickerWebsiteReference(i) for i in appended_data_pd["Ticker"].tolist()]
             except KeyError:
                 if i == 20:
                     print ("Exception: One or more of the URL links does not contain any records")
         
             
     #Append new columns including the following information: stock_name, reference url link, stock sector, and stock industry
-    appended_data_pd["Name"] = [GetStockName(i) for i in appended_data_pd["Ticker"].tolist()]
-    appended_data_pd["URL"] = [GetTickerWebsiteReference(i) for i in appended_data_pd["Ticker"].tolist()]
-    appended_data_pd["Sector"] = [GetStockSector(i) for i in appended_data_pd["Ticker"].tolist()]
-    appended_data_pd["Industry"] = [GetStockIndustry(i) for i in appended_data_pd["Ticker"].tolist()]
-   
     
     # appended_data_pd['Ticker'] = appended_data_pd['Ticker'].apply(lambda x: f'<a href="https://finviz.com/quote.ashx?t={x}">{x}</a>')
     # HTML(appended_data_pd.to_html(escape=False))
@@ -80,7 +74,7 @@ def TickerDetection(request_url):
             'RSI':  sqlalchemy.types.DECIMAL, 
             'Price': sqlalchemy.types.DECIMAL,
             'Volume': sqlalchemy.types.BIGINT,
-            'Name': sqlalchemy.VARCHAR(50),
+            'Company': sqlalchemy.VARCHAR(100),
             'URL': sqlalchemy.VARCHAR(50),
             'Sector': sqlalchemy.VARCHAR(50),
             'Industry': sqlalchemy.VARCHAR(50)})
@@ -94,35 +88,37 @@ def TickerDetection(request_url):
     SQLEngine().dispose()
     
 
-def GetStockName(ticker):
-    response = urllib.request.urlopen(f'https://query2.finance.yahoo.com/v1/finance/search?q={ticker}')
-    content = response.read()
-    data = json.loads(content.decode('utf8'))['quotes'][0]['shortname']
-    return data
+def GetNameSectorIndustry(request_url):
+    
+    new_request_url = request_url.replace("=171&","=111&")
+    
+    #Initial Load of the Data
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:77.0) Gecko/20100101 Firefox/77.0'}
+    appended_data_nsi = []
+    for i in range(0,100):
+        if i % 20 == 0:
+            screen = requests.get(new_request_url+"&r="+str(i+1), headers = headers).text
+            tables = pd.read_html(screen)
+            tables = tables[-2]
+            tables.columns = tables.iloc[0]
+            tables = tables[1:]
+            appended_data_nsi.append(tables)
+            appended_data_pd_nsi = pd.concat(appended_data_nsi)
+            appended_data_pd_nsi = appended_data_pd_nsi.reset_index(drop=True)
+            appended_data_pd_nsi = appended_data_pd_nsi.drop_duplicates()
+            try:
+                appended_data_pd_nsi = appended_data_pd_nsi[['Ticker', 'Company', 'Sector', 'Industry']]
+                appended_data_pd_nsi = appended_data_pd_nsi.drop(appended_data_pd_nsi[ (appended_data_pd_nsi.Ticker == "-") | (appended_data_pd_nsi.Company == "-") 
+                | (appended_data_pd_nsi.Sector == "-") | (appended_data_pd_nsi.Industry == "-")].index)
+            except KeyError:
+                if i == 20:
+                    print ("Exception: One or more of the URL links does not contain any records")
+    return appended_data_pd_nsi
 
 
 def GetTickerWebsiteReference(ticker):
     url_link = "https://finviz.com/quote.ashx?t={}".format(ticker)
     return url_link
-
-
-def GetStockSector(ticker):
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:77.0) Gecko/20100101 Firefox/77.0'}
-    page = requests.get("https://finviz.com/quote.ashx?t={}".format(ticker), headers= headers)
-    soupysoupy = bs4.BeautifulSoup(page.text,'html.parser')
-    tags = soupysoupy.find_all('a', {'class': 'tab-link', 'href': True})
-    print (tags)
-    sector = str(tags[1]).split(">")[1][:-3]
-    return sector
-
-
-def GetStockIndustry(ticker):
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:77.0) Gecko/20100101 Firefox/77.0'}
-    page = requests.get("https://finviz.com/quote.ashx?t={}".format(ticker), headers= headers)
-    soupysoupy = bs4.BeautifulSoup(page.text,'html.parser')
-    tags = soupysoupy.find_all('a', {'class': 'tab-link', 'href': True})
-    industry = str(tags[2]).split(">")[1][:-3]
-    return industry
 
 
 def GenerateReport():  
@@ -131,9 +127,9 @@ def GenerateReport():
     OpenPropertiesFile()
 
     #Using data generated from finviz_all_list, filter important columns for both new and updated tickers which show change/difference in metrics
-    finviz_report_updated = pd.read_sql_query('select "Count","Ticker","Name","URL","Sector","Industry","Initial_Insert","Last_Updated_On","SMA50_Behavior","RSI_Behavior","Price_Behavior","Volume_Behavior" from finviz_all_list where "Status" in (%(value1)s) order by "Count" desc, "Current_RSI" limit 25', 
+    finviz_report_updated = pd.read_sql_query('select "Count" AS "Hits","Ticker","Company","URL","Sector","Industry","Initial_Insert","Last_Updated_On","SMA50_Behavior","RSI_Behavior","Price_Behavior","Volume_Behavior" from finviz_all_list where "Status" in (%(value1)s) order by "Count" desc, "Current_RSI" limit 25', 
     SQLEngine(), params = {"value1": 'UPDATED'})
-    finviz_report_new_insert = pd.read_sql_query('select "Count","Ticker","Name","URL","Sector","Industry","Initial_Insert","Last_Updated_On","SMA50_Behavior","RSI_Behavior","Price_Behavior","Volume_Behavior" from finviz_all_list where "Status" in (%(value2)s) order by "Count" desc, "Current_RSI" limit 25', 
+    finviz_report_new_insert = pd.read_sql_query('select "Count" AS "Hits","Ticker","Company","URL","Sector","Industry","Initial_Insert","Last_Updated_On","SMA50_Behavior","RSI_Behavior","Price_Behavior","Volume_Behavior" from finviz_all_list where "Status" in (%(value2)s) order by "Count" desc, "Current_RSI" limit 25', 
     SQLEngine(), params = {"value2": 'NEW INSERT'})
 
     #Enhance table look of finviz_report_updated and finviz_report_new_insert
