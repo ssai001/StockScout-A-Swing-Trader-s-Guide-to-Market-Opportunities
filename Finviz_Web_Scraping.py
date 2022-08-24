@@ -4,10 +4,13 @@ from email.mime.text import MIMEText
 from datetime import date, datetime
 from dotenv import load_dotenv
 from IPython.display import HTML
+from itertools import chain
 from pretty_html_table import build_table
+import bs4
 import holidays
 import os
 import pandas as pd
+import re
 import requests
 import smtplib
 import sqlalchemy
@@ -52,6 +55,7 @@ def TickerDetection(request_url):
                 | (appended_data_pd.RSI == "-") | (appended_data_pd.Price == "-") | (appended_data_pd.Volume == "-")].index)
                 appended_data_pd = appended_data_pd.merge(GetNameSectorIndustry(request_url), on='Ticker')
                 appended_data_pd["URL"] = [GetTickerWebsiteReference(i) for i in appended_data_pd["Ticker"].tolist()]
+                #appended_data_pd["Rating"] = ["N/A" if len(RecommendationRating(i)) == 0 else RecommendationRating(i) for i in appended_data_pd["Ticker"].tolist()]
             except KeyError:
                 if i == 20:
                     print ("Exception: One or more of the URL links does not contain any records")
@@ -120,6 +124,16 @@ def GetTickerWebsiteReference(ticker):
     url_link = "https://finviz.com/quote.ashx?t={}".format(ticker)
     return url_link
 
+
+def RecommendationRating(ticker):
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:77.0) Gecko/20100101 Firefox/77.0'}
+    page = requests.get("https://finviz.com/quote.ashx?t={}&ty=c&ta=1&p=d".format(ticker),headers= headers)
+    soupysoupy = bs4.BeautifulSoup(page.text,'html.parser')
+    tags = soupysoupy.find_all("tr",{"class":"table-dark-row"})
+    relevant_tags_list = [str(tag) for tag in tags[-1]]
+    recommendation_score = [re.findall('\d*\.?\d+',relevant_tags_list[idx+1].split("<b>")[1]) for idx, i in enumerate(relevant_tags_list) if idx < len(relevant_tags_list) - 1 and 'Recom' in i]
+    recommendation_score_string = ' '.join(chain.from_iterable(recommendation_score))
+    return recommendation_score_string
 
 def GenerateReport():  
 
