@@ -55,17 +55,15 @@ def TickerDetection(request_url):
                 | (appended_data_pd.RSI == "-") | (appended_data_pd.Price == "-") | (appended_data_pd.Volume == "-")].index)
                 appended_data_pd = appended_data_pd.merge(GetNameSectorIndustry(request_url), on='Ticker')
                 appended_data_pd["URL"] = [GetTickerWebsiteReference(i) for i in appended_data_pd["Ticker"].tolist()]
-                #appended_data_pd["Rating"] = ["N/A" if len(RecommendationRating(i)) == 0 else RecommendationRating(i) for i in appended_data_pd["Ticker"].tolist()]
+                appended_data_pd["Rating"] = [RecommendationRating(i) for i in appended_data_pd["Ticker"].tolist()]
+                appended_data_pd["Rating"] = ["N/A" if len(i) == 0 else i for i in appended_data_pd["Rating"].tolist()]
             except KeyError:
                 if i == 20:
                     print ("Exception: One or more of the URL links does not contain any records")
         
-            
-    #Append new columns including the following information: stock_name, reference url link, stock sector, and stock industry
     
     # appended_data_pd['Ticker'] = appended_data_pd['Ticker'].apply(lambda x: f'<a href="https://finviz.com/quote.ashx?t={x}">{x}</a>')
     # HTML(appended_data_pd.to_html(escape=False))
-    
     
     #Using sqlalchemy library, take appended_data_pd and upload to finviz_stock_screener table in PostgreSQL
     #All data is replaced in finviz_stock_screener during every run
@@ -83,8 +81,8 @@ def TickerDetection(request_url):
             'Sector': sqlalchemy.VARCHAR(50),
             'Industry': sqlalchemy.VARCHAR(50)})
     
-    # #Call stored procedure finviz_all_list() in PostgreSQL which inserts the new tickers generated from above into a new table called finviz_all_list
-    # #If there are any repeated records in finviz_stock_screener that occur in a subsequent run, finviz_all_list will update the existing ticker with new information from Finviz.com on that day
+    # # #Call stored procedure finviz_all_list() in PostgreSQL which inserts the new tickers generated from above into a new table called finviz_all_list
+    # # #If there are any repeated records in finviz_stock_screener that occur in a subsequent run, finviz_all_list will update the existing ticker with new information from Finviz.com on that day
     cursor.execute("CALL finviz_all_list();")
     connection.commit()
     cursor.close()
@@ -141,9 +139,9 @@ def GenerateReport():
     OpenPropertiesFile()
 
     #Using data generated from finviz_all_list, filter important columns for both new and updated tickers which show change/difference in metrics
-    finviz_report_updated = pd.read_sql_query('select "Count" AS "Hits","Ticker","Company","URL","Sector","Industry","Initial_Insert","Last_Updated_On","SMA50_Behavior","RSI_Behavior","Price_Behavior","Volume_Behavior" from finviz_all_list where "Status" in (%(value1)s) order by "Count" desc, "Current_RSI" limit 25', 
+    finviz_report_updated = pd.read_sql_query('select "Count" AS "Hits","Ticker","Company","URL","Sector","Industry","Initial_Insert","Last_Updated_On","RSI_Behavior","Price_Behavior","Rating_Behavior" AS "Rating_Behavior (1=Buy, 5=Sell)" from finviz_all_list where "Status" in (%(value1)s) order by "Count" desc, "Current_RSI" limit 25', 
     SQLEngine(), params = {"value1": 'UPDATED'})
-    finviz_report_new_insert = pd.read_sql_query('select "Count" AS "Hits","Ticker","Company","URL","Sector","Industry","Initial_Insert","Last_Updated_On","SMA50_Behavior","RSI_Behavior","Price_Behavior","Volume_Behavior" from finviz_all_list where "Status" in (%(value2)s) order by "Count" desc, "Current_RSI" limit 25', 
+    finviz_report_new_insert = pd.read_sql_query('select "Count" AS "Hits","Ticker","Company","URL","Sector","Industry","Initial_Insert","Last_Updated_On","RSI_Behavior","Price_Behavior","Rating_Behavior" AS "Rating_Behavior (1=Buy, 5=Sell)" from finviz_all_list where "Status" in (%(value2)s) order by "Count" desc, "Current_RSI" limit 25', 
     SQLEngine(), params = {"value2": 'NEW INSERT'})
 
     #Enhance table look of finviz_report_updated and finviz_report_new_insert

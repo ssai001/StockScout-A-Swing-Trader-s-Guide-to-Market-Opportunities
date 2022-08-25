@@ -66,19 +66,21 @@ CREATE TABLE finviz_all_list(
 
 ---------------------------Queries to alter tables----------------------------------------------
 
-ALTER TABLE finviz_stock_screener DROP COLUMN "Name"; -- RUN THIS!!
+ALTER TABLE finviz_stock_screener DROP COLUMN "Name";
 
-ALTER TABLE finviz_stock_screener ADD COLUMN "Company" VARCHAR(100); -- RUN THIS!!
+ALTER TABLE finviz_stock_screener ADD COLUMN "Company" VARCHAR(100);
 ALTER TABLE finviz_stock_screener ADD COLUMN "URL" VARCHAR(50);
 ALTER TABLE finviz_stock_screener ADD COLUMN "Sector" VARCHAR(50);
 ALTER TABLE finviz_stock_screener ADD COLUMN "Industry" VARCHAR(50);
-ALTER TABLE finviz_stock_screener ALTER COLUMN "Company" SET NOT NULL; -- RUN THIS!!
+ALTER TABLE finviz_stock_screener ADD COLUMN "Rating" VARCHAR(50);  -- RUN THIS!!
+ALTER TABLE finviz_stock_screener ALTER COLUMN "Company" SET NOT NULL;
 ALTER TABLE finviz_stock_screener ALTER COLUMN "URL" SET NOT NULL;
 ALTER TABLE finviz_stock_screener ALTER COLUMN "Sector" SET NOT NULL;
 ALTER TABLE finviz_stock_screener ALTER COLUMN "Industry" SET NOT NULL;
+ALTER TABLE finviz_stock_screener ALTER COLUMN "Rating" SET NOT NULL;  -- RUN THIS!!
 
 
-ALTER TABLE finviz_all_list DROP COLUMN "Name"; -- RUN THIS!!
+ALTER TABLE finviz_all_list DROP COLUMN "Name";
 
 
 ALTER TABLE finviz_all_list ADD CONSTRAINT uniqueticker UNIQUE ("Ticker");
@@ -87,19 +89,25 @@ ALTER TABLE finviz_all_list ADD COLUMN "SMA50_Behavior" TEXT;
 ALTER TABLE finviz_all_list ADD COLUMN "RSI_Behavior" TEXT;
 ALTER TABLE finviz_all_list ADD COLUMN "Price_Behavior" TEXT;
 ALTER TABLE finviz_all_list ADD COLUMN "Volume_Behavior" TEXT;
-ALTER TABLE finviz_all_list ADD COLUMN "Company" VARCHAR(100); -- RUN THIS!!
+ALTER TABLE finviz_all_list ADD COLUMN "Company" VARCHAR(100);
 ALTER TABLE finviz_all_list ADD COLUMN "URL" VARCHAR(50);
 ALTER TABLE finviz_all_list ADD COLUMN "Sector" VARCHAR(50);
 ALTER TABLE finviz_all_list ADD COLUMN "Industry" VARCHAR(50);
+ALTER TABLE finviz_all_list ADD COLUMN "Current_Rating" VARCHAR(50); --RUN THIS!!
+ALTER TABLE finviz_all_list ADD COLUMN "Previous_Rating" VARCHAR(50); --RUN THIS!!
+ALTER TABLE finviz_all_list ADD COLUMN "Rating_Behavior" TEXT; --RUN THIS!!
 ALTER TABLE finviz_all_list ALTER COLUMN "Status" SET NOT NULL;
 ALTER TABLE finviz_all_list ALTER COLUMN "SMA50_Behavior" SET NOT NULL;
 ALTER TABLE finviz_all_list ALTER COLUMN "RSI_Behavior" SET NOT NULL;
 ALTER TABLE finviz_all_list ALTER COLUMN "Price_Behavior" SET NOT NULL;
 ALTER TABLE finviz_all_list ALTER COLUMN "Volume_Behavior" SET NOT NULL;
-ALTER TABLE finviz_all_list ALTER COLUMN "Company" SET NOT NULL; -- RUN THIS!!
+ALTER TABLE finviz_all_list ALTER COLUMN "Company" SET NOT NULL;
 ALTER TABLE finviz_all_list ALTER COLUMN "URL" SET NOT NULL;
 ALTER TABLE finviz_all_list ALTER COLUMN "Sector" SET NOT NULL;
 ALTER TABLE finviz_all_list ALTER COLUMN "Industry" SET NOT NULL;
+ALTER TABLE finviz_all_list ALTER COLUMN "Current_Rating" SET NOT NULL; --RUN THIS!!
+ALTER TABLE finviz_all_list ALTER COLUMN "Previous_Rating" SET NOT NULL; --RUN THIS!!
+ALTER TABLE finviz_all_list ALTER COLUMN "Rating_Behavior" SET NOT NULL; --RUN THIS!!
 -----------------------------------------------------------------------------------------------
 
 
@@ -115,13 +123,13 @@ BEGIN
     LOOP
         INSERT INTO finviz_all_list ("Count", "Ticker", "Current_SMA50", "Previous_SMA50",
         "Current_RSI", "Previous_RSI", "Current_Price", "Previous_Price",
-        "Current_Volume", "Previous_Volume", "Initial_Insert", "Last_Updated_On",
-        "Status", "SMA50_Behavior", "RSI_Behavior", "Price_Behavior", "Volume_Behavior",
+        "Current_Volume", "Previous_Volume", "Current_Rating", "Previous_Rating", "Initial_Insert", "Last_Updated_On",
+        "Status", "SMA50_Behavior", "RSI_Behavior", "Price_Behavior", "Volume_Behavior", "Rating_Behavior", 
         "Company", "URL", "Sector", "Industry")
         VALUES (1, REC."Ticker", REC."SMA50", REC."SMA50",
         REC."RSI", REC."RSI", REC."Price", REC."Price",
-        REC."Volume", REC."Volume", CURRENT_DATE_EST, CURRENT_DATE_EST,
-        'NEW INSERT','Initial SMA50','Initial RSI','Initial Price','Initial Volume',
+        REC."Volume", REC."Volume", REC."Rating", REC."Rating", CURRENT_DATE_EST, CURRENT_DATE_EST,
+        'NEW INSERT','Initial SMA50','Initial RSI','Initial Price','Initial Volume','Initial Rating',
         REC."Company", REC."URL", REC."Sector", REC."Industry")
         ON CONFLICT ("Ticker") WHERE "Last_Updated_On" != CURRENT_DATE_EST
         DO
@@ -129,7 +137,8 @@ BEGIN
             "Current_SMA50" = REC."SMA50", "Previous_SMA50" = finviz_all_list."Current_SMA50",
             "Current_RSI" = REC."RSI", "Previous_RSI" = finviz_all_list."Current_RSI", 
             "Current_Price" = REC."Price", "Previous_Price" = finviz_all_list."Current_Price",
-            "Current_Volume" = REC."Volume", "Previous_Volume" = finviz_all_list."Current_Volume", 
+            "Current_Volume" = REC."Volume", "Previous_Volume" = finviz_all_list."Current_Volume",
+            "Current_Rating" = REC."Rating", "Previous_Rating" = finviz_all_list."Current_Rating", 
             "Last_Updated_On" = CURRENT_DATE_EST;
     END LOOP;
     UPDATE finviz_all_list AS fal
@@ -139,7 +148,8 @@ BEGIN
         WHEN fal."Count" > 1 AND LEFT(fal."Current_SMA50",-1)::DECIMAL = LEFT(fal."Previous_SMA50",-1)::DECIMAL
         AND fal."Current_RSI" = fal."Previous_RSI" 
         AND fal."Current_Price" = fal."Previous_Price" 
-        AND fal."Current_Volume" = fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'NEW INSERT'
+        AND fal."Current_Volume" = fal."Previous_Volume" 
+        AND fal."Current_Rating" = fal."Previous_Rating" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'NEW INSERT'
         WHEN fal."Count" > 1 AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'UPDATED'
         ELSE 'ARCHIVED'
         END,
@@ -149,7 +159,8 @@ BEGIN
         WHEN fal."Count" > 1 AND LEFT(fal."Current_SMA50",-1)::DECIMAL = LEFT(fal."Previous_SMA50",-1)::DECIMAL 
         AND fal."Current_RSI" = fal."Previous_RSI" 
         AND fal."Current_Price" = fal."Previous_Price" 
-        AND fal."Current_Volume" = fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Initial SMA50 of ' || fal."Current_SMA50"
+        AND fal."Current_Volume" = fal."Previous_Volume" 
+        AND fal."Current_Rating" = fal."Previous_Rating" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Initial SMA50 of ' || fal."Current_SMA50"
         WHEN LEFT(fal."Current_SMA50",-1)::DECIMAL = LEFT(fal."Previous_SMA50",-1)::DECIMAL AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'No Change From ' || fal."Previous_SMA50"
         WHEN LEFT(fal."Current_SMA50",-1)::DECIMAL < LEFT(fal."Previous_SMA50",-1)::DECIMAL AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Decrease From ' || fal."Previous_SMA50" || ' to ' || fal."Current_SMA50"
         ELSE 'Not Applicable'
@@ -160,7 +171,8 @@ BEGIN
         WHEN fal."Count" > 1 AND LEFT(fal."Current_SMA50",-1)::DECIMAL = LEFT(fal."Previous_SMA50",-1)::DECIMAL 
         AND fal."Current_RSI" = fal."Previous_RSI" 
         AND fal."Current_Price" = fal."Previous_Price" 
-        AND fal."Current_Volume" = fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Initial RSI of ' || fal."Current_RSI"
+        AND fal."Current_Volume" = fal."Previous_Volume" 
+        AND fal."Current_Rating" = fal."Previous_Rating" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Initial RSI of ' || fal."Current_RSI"
         WHEN fal."Current_RSI" = fal."Previous_RSI" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'No Change From ' || fal."Previous_RSI"
         WHEN fal."Current_RSI" < fal."Previous_RSI" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Decrease From ' || fal."Previous_RSI" || ' to ' || fal."Current_RSI"
         ELSE 'Not Applicable'
@@ -171,7 +183,8 @@ BEGIN
         WHEN fal."Count" > 1 AND LEFT(fal."Current_SMA50",-1)::DECIMAL = LEFT(fal."Previous_SMA50",-1)::DECIMAL 
         AND fal."Current_RSI" = fal."Previous_RSI" 
         AND fal."Current_Price" = fal."Previous_Price" 
-        AND fal."Current_Volume" = fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Initial Price of ' || fal."Current_Price"
+        AND fal."Current_Volume" = fal."Previous_Volume" 
+        AND fal."Current_Rating" = fal."Previous_Rating" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Initial Price of ' || fal."Current_Price"
         WHEN fal."Current_Price" = fal."Previous_Price" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'No Change From ' || fal."Previous_Price"
         WHEN fal."Current_Price" < fal."Previous_Price" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Decrease From ' || fal."Previous_Price" || ' to ' || fal."Current_Price"
         ELSE 'Not Applicable'
@@ -182,9 +195,24 @@ BEGIN
         WHEN fal."Count" > 1 AND LEFT(fal."Current_SMA50",-1)::DECIMAL = LEFT(fal."Previous_SMA50",-1)::DECIMAL 
         AND fal."Current_RSI" = fal."Previous_RSI" 
         AND fal."Current_Price" = fal."Previous_Price" 
-        AND fal."Current_Volume" = fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Initial Volume of ' || fal."Current_Volume"
-        WHEN "Current_Volume" = fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'No Change From ' || fal."Previous_Volume"
-        WHEN "Current_Volume" < fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Decrease From ' || fal."Previous_Volume" || ' to ' || fal."Current_Volume"
+        AND fal."Current_Volume" = fal."Previous_Volume" 
+        AND fal."Current_Rating" = fal."Previous_Rating" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Initial Volume of ' || fal."Current_Volume"
+        WHEN fal."Current_Volume" = fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'No Change From ' || fal."Previous_Volume"
+        WHEN fal."Current_Volume" < fal."Previous_Volume" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Decrease From ' || fal."Previous_Volume" || ' to ' || fal."Current_Volume"
+        ELSE 'Not Applicable'
+        END,
+    "Rating_Behavior" = CASE
+        WHEN fal."Current_Rating" > "Previous_Rating" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Increase From ' || fal."Previous_Rating" || ' to ' || fal."Current_Rating"
+        WHEN fal."Current_Rating" = fal."Previous_Rating" AND fal."Count" = 1 AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Initial Rating of ' || fal."Current_Rating"
+        WHEN fal."Count" > 1 AND LEFT(fal."Current_SMA50",-1)::DECIMAL = LEFT(fal."Previous_SMA50",-1)::DECIMAL 
+        AND fal."Current_RSI" = fal."Previous_RSI" 
+        AND fal."Current_Price" = fal."Previous_Price" 
+        AND fal."Current_Volume" = fal."Previous_Volume" 
+        AND fal."Current_Rating" = fal."Previous_Rating" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Initial Rating of ' || fal."Current_Rating"
+        WHEN fal."Current_Rating" = fal."Previous_Rating" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'No Change From ' || fal."Previous_Rating"
+        WHEN fal."Current_Rating" < fal."Previous_Rating" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Decrease From ' || fal."Previous_Rating" || ' to ' || fal."Current_Rating"
+        WHEN fal."Current_Rating" = 'N/A' AND fal."Previous_Rating" != 'N/A' AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Change From ' || fal."Previous_Rating" || ' to ' || fal."Current_Rating"
+        WHEN fal."Current_Rating" != 'N/A' AND fal."Previous_Rating" = 'N/A' AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Change From ' || fal."Previous_Rating" || ' to ' || fal."Current_Rating"
         ELSE 'Not Applicable'
     END;
 END;
