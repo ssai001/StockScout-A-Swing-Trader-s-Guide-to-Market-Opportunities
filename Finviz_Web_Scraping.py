@@ -53,18 +53,18 @@ def TickerDetection(request_url):
                 appended_data_pd = appended_data_pd[['Ticker', 'SMA50', 'RSI', 'Price', 'Volume']]
                 appended_data_pd = appended_data_pd.drop(appended_data_pd[ (appended_data_pd.Ticker == "-") | (appended_data_pd.SMA50 == "-") 
                 | (appended_data_pd.RSI == "-") | (appended_data_pd.Price == "-") | (appended_data_pd.Volume == "-")].index)
-                appended_data_pd = appended_data_pd.merge(GetNameSectorIndustry(request_url), on='Ticker')
+                appended_data_pd = appended_data_pd.merge(GetCompanySectorIndustry(request_url), on='Ticker')
                 appended_data_pd["URL"] = [GetTickerWebsiteReference(i) for i in appended_data_pd["Ticker"].tolist()]
                 appended_data_pd["Rating"] = [RecommendationRating(i) for i in appended_data_pd["Ticker"].tolist()]
-                appended_data_pd["Rating"] = ["N/A" if len(i) == 0 else i for i in appended_data_pd["Rating"].tolist()]
             except KeyError:
                 if i == 20:
                     print ("Exception: One or more of the URL links does not contain any records")
+            except (ValueError,IndexError) as e:
+                if i == 20:
+                    print ("The following error has occurred: {}".format(e))
+                    print ("The URL causing the issue is {}".format(request_url))
+                continue
         
-    
-    # appended_data_pd['Ticker'] = appended_data_pd['Ticker'].apply(lambda x: f'<a href="https://finviz.com/quote.ashx?t={x}">{x}</a>')
-    # HTML(appended_data_pd.to_html(escape=False))
-    
     #Using sqlalchemy library, take appended_data_pd and upload to finviz_stock_screener table in PostgreSQL
     #All data is replaced in finviz_stock_screener during every run
     OpenPropertiesFile()
@@ -77,12 +77,13 @@ def TickerDetection(request_url):
             'Price': sqlalchemy.types.DECIMAL,
             'Volume': sqlalchemy.types.BIGINT,
             'Company': sqlalchemy.VARCHAR(100),
-            'URL': sqlalchemy.VARCHAR(50),
             'Sector': sqlalchemy.VARCHAR(50),
-            'Industry': sqlalchemy.VARCHAR(50)})
+            'Industry': sqlalchemy.VARCHAR(50),
+            'URL': sqlalchemy.VARCHAR(50),
+            'Rating': sqlalchemy.VARCHAR(50)})
     
-    # # #Call stored procedure finviz_all_list() in PostgreSQL which inserts the new tickers generated from above into a new table called finviz_all_list
-    # # #If there are any repeated records in finviz_stock_screener that occur in a subsequent run, finviz_all_list will update the existing ticker with new information from Finviz.com on that day
+    # Call stored procedure finviz_all_list() in PostgreSQL which inserts the new tickers generated from above into a new table called finviz_all_list
+    # If there are any repeated records in finviz_stock_screener that occur in a subsequent run, finviz_all_list will update the existing ticker with new information from Finviz.com on that day
     cursor.execute("CALL finviz_all_list();")
     connection.commit()
     cursor.close()
@@ -90,7 +91,7 @@ def TickerDetection(request_url):
     SQLEngine().dispose()
     
 
-def GetNameSectorIndustry(request_url):
+def GetCompanySectorIndustry(request_url):
     
     new_request_url = request_url.replace("=171&","=111&")
     
@@ -124,14 +125,28 @@ def GetTickerWebsiteReference(ticker):
 
 
 def RecommendationRating(ticker):
+    
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:77.0) Gecko/20100101 Firefox/77.0'}
-    page = requests.get("https://finviz.com/quote.ashx?t={}&ty=c&ta=1&p=d".format(ticker),headers= headers)
+    page = requests.get("https://finviz.com/quote.ashx?t={}&ty=c&p=d&b=1".format(ticker), headers = headers)
     soupysoupy = bs4.BeautifulSoup(page.text,'html.parser')
     tags = soupysoupy.find_all("tr",{"class":"table-dark-row"})
     relevant_tags_list = [str(tag) for tag in tags[-1]]
     recommendation_score = [re.findall('\d*\.?\d+',relevant_tags_list[idx+1].split("<b>")[1]) for idx, i in enumerate(relevant_tags_list) if idx < len(relevant_tags_list) - 1 and 'Recom' in i]
     recommendation_score_string = ' '.join(chain.from_iterable(recommendation_score))
-    return recommendation_score_string
+    
+    if recommendation_score_string != '':
+        if round(float(recommendation_score_string)) == 1:
+            return 'Strong Buy'
+        if round(float(recommendation_score_string)) == 2:
+            return 'Buy'
+        if round(float(recommendation_score_string)) == 3:
+            return 'Hold'
+        if round(float(recommendation_score_string)) == 4:
+            return 'Sell'
+        if round(float(recommendation_score_string)) == 5:
+            return 'Strong Sell'
+    return 'N/A'
+
 
 def GenerateReport():  
 
@@ -139,9 +154,9 @@ def GenerateReport():
     OpenPropertiesFile()
 
     #Using data generated from finviz_all_list, filter important columns for both new and updated tickers which show change/difference in metrics
-    finviz_report_updated = pd.read_sql_query('select "Count" AS "Hits","Ticker","Company","URL","Sector","Industry","Initial_Insert","Last_Updated_On","RSI_Behavior","Price_Behavior","Rating_Behavior" AS "Rating_Behavior (1=Buy, 5=Sell)" from finviz_all_list where "Status" in (%(value1)s) order by "Count" desc, "Current_RSI" limit 25', 
+    finviz_report_updated = pd.read_sql_query('select "Count" AS "Hits","Ticker","Company","URL","Sector","Industry","Initial_Insert","Last_Updated_On","RSI_Behavior","Price_Behavior","Rating_Behavior" from finviz_all_list where "Status" in (%(value1)s) order by "Count" desc, "Current_RSI" limit 25', 
     SQLEngine(), params = {"value1": 'UPDATED'})
-    finviz_report_new_insert = pd.read_sql_query('select "Count" AS "Hits","Ticker","Company","URL","Sector","Industry","Initial_Insert","Last_Updated_On","RSI_Behavior","Price_Behavior","Rating_Behavior" AS "Rating_Behavior (1=Buy, 5=Sell)" from finviz_all_list where "Status" in (%(value2)s) order by "Count" desc, "Current_RSI" limit 25', 
+    finviz_report_new_insert = pd.read_sql_query('select "Count" AS "Hits","Ticker","Company","URL","Sector","Industry","Initial_Insert","Last_Updated_On","RSI_Behavior","Price_Behavior","Rating_Behavior" from finviz_all_list where "Status" in (%(value2)s) order by "Count" desc, "Current_RSI" limit 25', 
     SQLEngine(), params = {"value2": 'NEW INSERT'})
 
     #Enhance table look of finviz_report_updated and finviz_report_new_insert
