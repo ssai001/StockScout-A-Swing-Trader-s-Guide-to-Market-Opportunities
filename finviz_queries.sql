@@ -202,7 +202,7 @@ BEGIN
         ELSE 'Not Applicable'
         END,
     "Rating_Behavior" = CASE
-        WHEN fal."Current_Rating" > "Previous_Rating" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Increase From ' || fal."Previous_Rating" || ' to ' || fal."Current_Rating"
+        WHEN fal."Current_Rating" != "Previous_Rating" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Change From ' || fal."Previous_Rating" || ' to ' || fal."Current_Rating"
         WHEN fal."Current_Rating" = fal."Previous_Rating" AND fal."Count" = 1 AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Initial Rating of ' || fal."Current_Rating"
         WHEN fal."Count" > 1 AND LEFT(fal."Current_SMA50",-1)::DECIMAL = LEFT(fal."Previous_SMA50",-1)::DECIMAL 
         AND fal."Current_RSI" = fal."Previous_RSI" 
@@ -210,9 +210,6 @@ BEGIN
         AND fal."Current_Volume" = fal."Previous_Volume" 
         AND fal."Current_Rating" = fal."Previous_Rating" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Initial Rating of ' || fal."Current_Rating"
         WHEN fal."Current_Rating" = fal."Previous_Rating" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'No Change From ' || fal."Previous_Rating"
-        WHEN fal."Current_Rating" < fal."Previous_Rating" AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Decrease From ' || fal."Previous_Rating" || ' to ' || fal."Current_Rating"
-        WHEN fal."Current_Rating" = 'N/A' AND fal."Previous_Rating" != 'N/A' AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Change From ' || fal."Previous_Rating" || ' to ' || fal."Current_Rating"
-        WHEN fal."Current_Rating" != 'N/A' AND fal."Previous_Rating" = 'N/A' AND fal."Last_Updated_On" = CURRENT_DATE_EST THEN 'Change From ' || fal."Previous_Rating" || ' to ' || fal."Current_Rating"
         ELSE 'Not Applicable'
     END;
 END;
