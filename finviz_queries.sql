@@ -69,14 +69,14 @@ CREATE TABLE finviz_all_list(
 ALTER TABLE finviz_stock_screener DROP COLUMN "Name";
 
 ALTER TABLE finviz_stock_screener ADD COLUMN "Company" VARCHAR(100);
-ALTER TABLE finviz_stock_screener ADD COLUMN "URL" VARCHAR(50);
 ALTER TABLE finviz_stock_screener ADD COLUMN "Sector" VARCHAR(50);
 ALTER TABLE finviz_stock_screener ADD COLUMN "Industry" VARCHAR(50);
+ALTER TABLE finviz_stock_screener ADD COLUMN "URL" VARCHAR(50);
 ALTER TABLE finviz_stock_screener ADD COLUMN "Rating" VARCHAR(50);  -- RUN THIS!!
 ALTER TABLE finviz_stock_screener ALTER COLUMN "Company" SET NOT NULL;
-ALTER TABLE finviz_stock_screener ALTER COLUMN "URL" SET NOT NULL;
 ALTER TABLE finviz_stock_screener ALTER COLUMN "Sector" SET NOT NULL;
 ALTER TABLE finviz_stock_screener ALTER COLUMN "Industry" SET NOT NULL;
+ALTER TABLE finviz_stock_screener ALTER COLUMN "URL" SET NOT NULL;
 ALTER TABLE finviz_stock_screener ALTER COLUMN "Rating" SET NOT NULL;  -- RUN THIS!!
 
 
