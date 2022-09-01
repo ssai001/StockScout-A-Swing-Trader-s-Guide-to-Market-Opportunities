@@ -131,7 +131,7 @@ BEGIN
         REC."Volume", REC."Volume", REC."Rating", REC."Rating", CURRENT_DATE_EST, CURRENT_DATE_EST,
         'NEW INSERT','Initial SMA50','Initial RSI','Initial Price','Initial Volume','Initial Rating',
         REC."Company", REC."URL", REC."Sector", REC."Industry")
-        ON CONFLICT ("Ticker") WHERE "Last_Updated_On" != CURRENT_DATE_EST
+        ON CONFLICT ("Ticker")
         DO
             UPDATE SET "Count" = finviz_all_list."Count" + 1, 
             "Current_SMA50" = REC."SMA50", "Previous_SMA50" = finviz_all_list."Current_SMA50",
@@ -139,7 +139,7 @@ BEGIN
             "Current_Price" = REC."Price", "Previous_Price" = finviz_all_list."Current_Price",
             "Current_Volume" = REC."Volume", "Previous_Volume" = finviz_all_list."Current_Volume",
             "Current_Rating" = REC."Rating", "Previous_Rating" = finviz_all_list."Current_Rating", 
-            "Last_Updated_On" = CURRENT_DATE_EST;
+            "Last_Updated_On" = CURRENT_DATE_EST WHERE finviz_all_list."Last_Updated_On" != CURRENT_DATE_EST;
     END LOOP;
     UPDATE finviz_all_list AS fal
     SET 
