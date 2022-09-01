@@ -1,15 +1,16 @@
 #Import required libraries
+from bs4 import BeautifulSoup as soup
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import date, datetime
 from dotenv import load_dotenv
 from itertools import chain
 from pretty_html_table import build_table
-import bs4
+from urllib.request import Request, urlopen
 import holidays
+import numpy as np
 import os
 import pandas as pd
-import re
 import requests
 import smtplib
 import sqlalchemy
@@ -124,26 +125,50 @@ def GetTickerWebsiteReference(ticker):
 
 def RecommendationRating(ticker):
     
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:77.0) Gecko/20100101 Firefox/77.0'}
-    page = requests.get("https://finviz.com/quote.ashx?t={}&ty=c&p=d&b=1".format(ticker), headers = headers)
-    soupysoupy = bs4.BeautifulSoup(page.text,'html.parser')
-    tags = soupysoupy.find_all("tr",{"class":"table-dark-row"})
-    relevant_tags_list = [str(tag) for tag in tags[-1]]
-    recommendation_score = [re.findall('\d*\.?\d+',relevant_tags_list[idx+1].split("<b>")[1]) for idx, i in enumerate(relevant_tags_list) if idx < len(relevant_tags_list) - 1 and 'Recom' in i]
-    recommendation_score_string = ' '.join(chain.from_iterable(recommendation_score))
-    
-    if recommendation_score_string != '':
-        if round(float(recommendation_score_string)) == 1:
-            return 'Strong Buy'
-        if round(float(recommendation_score_string)) == 2:
-            return 'Buy'
-        if round(float(recommendation_score_string)) == 3:
-            return 'Hold'
-        if round(float(recommendation_score_string)) == 4:
-            return 'Sell'
-        if round(float(recommendation_score_string)) == 5:
-            return 'Strong Sell'
-    return 'N/A'
+    try:
+        url = ("http://finviz.com/quote.ashx?t={}".format(ticker))
+        req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        webpage = urlopen(req).read()
+        html = soup(webpage, "html.parser")
+
+        # Find fundamentals table
+        fundamentals = pd.read_html(str(html), attrs = {'class': 'snapshot-table2'})[0]
+
+        # Clean up fundamentals dataframe
+        fundamentals.columns = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
+        colOne = []
+        colLength = len(fundamentals)
+        for k in np.arange(0, colLength, 2):
+            colOne.append(fundamentals[f'{k}'])
+        attrs = pd.concat(colOne, ignore_index=True)
+
+        colTwo = []
+        colLength = len(fundamentals)
+        for k in np.arange(1, colLength, 2):
+            colTwo.append(fundamentals[f'{k}'])
+        vals = pd.concat(colTwo, ignore_index=True)
+
+        fundamentals = pd.DataFrame()
+        fundamentals['Attributes'] = attrs
+        fundamentals['Values'] = vals
+        recommendation_score_string = fundamentals[fundamentals['Attributes'] == 'Recom']['Values'].to_string()
+        recommendation_score_string_split_string = recommendation_score_string.split()[1]
+
+        if recommendation_score_string_split_string != '-':
+            if round(float(recommendation_score_string_split_string)) == 1:
+                return 'Strong Buy'
+            if round(float(recommendation_score_string_split_string)) == 2:
+                return 'Buy'
+            if round(float(recommendation_score_string_split_string)) == 3:
+                return 'Hold'
+            if round(float(recommendation_score_string_split_string)) == 4:
+                return 'Sell'
+            if round(float(recommendation_score_string_split_string)) == 5:
+                return 'Strong Sell'
+        return 'N/A'
+
+    except Exception as e:
+        return e
     
 
 def GenerateReport():  
