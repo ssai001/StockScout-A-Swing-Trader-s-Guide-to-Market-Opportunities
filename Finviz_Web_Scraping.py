@@ -1,23 +1,18 @@
 #Import required libraries
-from bs4 import BeautifulSoup as soup
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import date, datetime
 from dotenv import load_dotenv
-from IPython.display import HTML
 from itertools import chain
 from pretty_html_table import build_table
-from urllib.request import Request, urlopen
 import bs4
 import holidays
-import numpy as np
 import os
 import pandas as pd
 import re
 import requests
 import smtplib
 import sqlalchemy
-import time
 
 
 def main():
