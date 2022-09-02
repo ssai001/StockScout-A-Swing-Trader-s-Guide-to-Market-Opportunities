@@ -14,6 +14,7 @@ import pandas as pd
 import requests
 import smtplib
 import sqlalchemy
+import time
 
 
 def main():
@@ -126,6 +127,7 @@ def GetTickerWebsiteReference(ticker):
 def RecommendationRating(ticker):
     
     try:
+        time.sleep(0.5)
         url = ("http://finviz.com/quote.ashx?t={}".format(ticker))
         req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         webpage = urlopen(req).read()
